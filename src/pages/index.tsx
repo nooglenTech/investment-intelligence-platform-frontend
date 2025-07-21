@@ -5,14 +5,14 @@ export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<any>(null);
-  const [error, setError] = useState<string>("");
+  const [errorText, setErrorText] = useState<string>("");
 
   const handleUpload = async () => {
     if (!selectedFile) return;
 
     setIsLoading(true);
-    setError("");
     setResponse(null);
+    setErrorText("");
 
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -23,18 +23,23 @@ export default function Home() {
         body: formData,
       });
 
-      const text = await res.text(); // raw text response
+      const text = await res.text();
+      console.log("Raw backend response:", text);
 
       try {
         const json = JSON.parse(text);
-        setResponse(json);
+        if (json.analysis) {
+          setResponse(json.analysis);
+        } else {
+          setErrorText("⚠️ No 'analysis' field in backend response.");
+        }
       } catch (parseError) {
-        console.error("❌ JSON parse error:", parseError);
-        setError("⚠️ Backend responded but returned invalid JSON.");
+        console.error("❌ Failed to parse JSON:", parseError);
+        setErrorText("⚠️ Backend responded but returned invalid JSON:\n\n" + text);
       }
     } catch (networkError) {
-      console.error("❌ Network error:", networkError);
-      setError("❌ Failed to call backend.");
+      console.error("❌ Network or fetch error:", networkError);
+      setErrorText("❌ Error calling backend (fetch failed).");
     } finally {
       setIsLoading(false);
     }
@@ -43,11 +48,15 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">🧠 Investment Intelligence Platform</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">
+          🧠 Investment Intelligence Platform
+        </h1>
 
         <div className="bg-white p-6 rounded-lg shadow border border-gray-200 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Upload CIM (.pdf)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Upload CIM (.pdf)
+            </label>
             <input
               type="file"
               accept=".pdf"
@@ -71,17 +80,13 @@ export default function Home() {
             {isLoading ? "Analyzing..." : "Analyze Document"}
           </button>
 
-          {error && (
-            <div className="text-red-600 text-sm bg-red-50 rounded p-3 border border-red-200">
-              {error}
+          {errorText && (
+            <div className="bg-red-100 text-red-700 p-4 rounded whitespace-pre-wrap text-sm font-mono">
+              {errorText}
             </div>
           )}
 
-          {response && (
-            <div className="mt-6">
-              <AnalysisCard data={response} />
-            </div>
-          )}
+          {response && <AnalysisCard data={response} />}
         </div>
       </div>
     </main>

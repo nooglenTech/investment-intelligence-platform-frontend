@@ -1,63 +1,119 @@
+import React from "react";
+
 type AnalysisData = {
-  file_name: string;
-  analysis: {
-    company: {
-      name: string;
-      description: string;
-    };
-    industry: string;
-    financials: any;
-    thesis: string;
-    red_flags: string;
-    summary: string;
-    confidence_score: number;
+  company?: {
+    name?: string;
+    description?: string;
   };
+  industry?: string;
+  financials?: {
+    actuals?: {
+      revenue?: string;
+      year?: string;
+      ebitda?: string;
+      margin?: string;
+      gross_margin?: string;
+      capex?: string;
+      capex_pct_revenue?: string;
+      fcf?: string;
+    };
+    estimates?: {
+      revenue?: string;
+      year?: string;
+      ebitda?: string;
+      capex?: string;
+      capex_pct_revenue?: string;
+      fcf?: string;
+    };
+  };
+  thesis?: string;
+  red_flags?: string;
+  summary?: string;
+  confidence_score?: number;
+  flagged_fields?: string[];
+  low_confidence_flags?: string[];
 };
 
-export default function AnalysisCard({ data }: { data: AnalysisData }) {
-  const { file_name, analysis } = data;
+type Props = {
+  data: AnalysisData;
+};
+
+export default function AnalysisCard({ data }: Props) {
+  if (!data) return null;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 space-y-4">
-      <h2 className="text-xl font-bold text-blue-700">📄 {file_name}</h2>
+    <div className="whitespace-pre-wrap text-sm font-mono text-gray-800 space-y-4 mt-6">
+      {data.company?.name && (
+        <>
+          📌 Company: {data.company.name}
+          {"\n"}🔍 Description: {data.company.description || "N/A"}
+        </>
+      )}
 
-      <div>
-        <h3 className="text-lg font-semibold">🏢 Company</h3>
-        <p className="text-gray-700"><strong>{analysis.company.name}</strong></p>
-        <p className="text-sm text-gray-600">{analysis.company.description}</p>
-      </div>
+      {data.industry && (
+        <>
+          {"\n\n"}🏭 Industry: {data.industry}
+        </>
+      )}
 
-      <div>
-        <h3 className="text-lg font-semibold">🏭 Industry</h3>
-        <p className="text-gray-700">{analysis.industry}</p>
-      </div>
+      {(data.financials?.actuals || data.financials?.estimates) && (
+        <>
+          {"\n\n"}📊 Financials (Actuals):
+          {`\n- Revenue (Actual): ${data.financials?.actuals?.revenue || "N/A"} (${data.financials?.actuals?.year || "N/A"})`}
+          {`\n- EBITDA (Actual): ${data.financials?.actuals?.ebitda || "N/A"} (${data.financials?.actuals?.year || "N/A"})`}
+          {`\n- Margin: ${data.financials?.actuals?.margin || "N/A"}`}
+          {`\n- Gross Margin: ${data.financials?.actuals?.gross_margin || "N/A"}`}
+          {`\n- Capex: ${data.financials?.actuals?.capex || "N/A"} (${data.financials?.actuals?.capex_pct_revenue || "N/A"} of revenue)`}
+          {`\n- FCF: ${data.financials?.actuals?.fcf || "N/A"}`}
 
-      <div>
-        <h3 className="text-lg font-semibold">💰 Financials (Actuals)</h3>
-        <pre className="text-sm bg-gray-100 rounded p-2 overflow-x-auto">
-          {JSON.stringify(analysis.financials.actuals, null, 2)}
-        </pre>
-      </div>
+          {"\n\n"}📊 Financials (Estimates):
+          {`\n- Revenue (Est.): ${data.financials?.estimates?.revenue || "N/A"} (${data.financials?.estimates?.year || "N/A"})`}
+          {`\n- EBITDA (Est.): ${data.financials?.estimates?.ebitda || "N/A"} (${data.financials?.estimates?.year || "N/A"})`}
+          {`\n- Capex (Est.): ${data.financials?.estimates?.capex || "N/A"} (${data.financials?.estimates?.capex_pct_revenue || "N/A"} of revenue)`}
+          {`\n- FCF (Est.): ${data.financials?.estimates?.fcf || "N/A"}`}
+        </>
+      )}
 
-      <div>
-        <h3 className="text-lg font-semibold">🧠 Investment Thesis</h3>
-        <p className="text-gray-700 whitespace-pre-wrap">{analysis.thesis}</p>
-      </div>
+      {data.thesis && (
+        <>
+          {"\n\n"}💡 Investment Thesis:
+          {"\n"}{data.thesis}
+        </>
+      )}
 
-      <div>
-        <h3 className="text-lg font-semibold">⚠️ Red Flags</h3>
-        <p className="text-gray-700 whitespace-pre-wrap">{analysis.red_flags}</p>
-      </div>
+      {data.red_flags && (
+        <>
+          {"\n\n"}⚠️ Red Flags:
+          {"\n"}{data.red_flags}
+        </>
+      )}
 
-      <div>
-        <h3 className="text-lg font-semibold">📌 Summary</h3>
-        <p className="text-gray-700 whitespace-pre-wrap">{analysis.summary}</p>
-      </div>
+      {data.summary && (
+        <>
+          {"\n\n"}📝 Summary:
+          {"\n"}{data.summary}
+        </>
+      )}
 
-      <div>
-        <h3 className="text-lg font-semibold">🔎 Confidence Score</h3>
-        <p className="text-gray-700">{analysis.confidence_score}/100</p>
-      </div>
+      {typeof data.confidence_score === "number" && (
+        <>
+          {"\n\n"}📈 Confidence Score: {data.confidence_score}
+        </>
+      )}
+
+      {data.flagged_fields?.length > 0 && (
+        <>
+          {"\n\n"}⚠️ Flagged Fields:
+          {"\n"}{data.flagged_fields.join(", ")}
+        </>
+      )}
+
+      {data.low_confidence_flags?.length > 0 && (
+        <>
+          {"\n\n"}🔍 Low Confidence Flags:
+          {"\n"}{data.low_confidence_flags.map(flag => `- ${flag}`).join("\n")}
+        </>
+      )}
     </div>
   );
 }
