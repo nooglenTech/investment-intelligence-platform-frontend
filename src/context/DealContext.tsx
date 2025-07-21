@@ -25,7 +25,9 @@ export function DealProvider({ children }) {
       try {
         setIsLoading(true);
         const res = await fetch('http://localhost:8000/api/deals');
-        if (!res.ok) throw new Error('Failed to fetch deals.');
+        if (!res.ok) {
+          throw new Error('Failed to fetch deals from the backend.');
+        }
         const data = await res.json();
         const dealsWithUIState = data.map(mapDealFromApi);
         setDeals(dealsWithUIState);
@@ -35,42 +37,17 @@ export function DealProvider({ children }) {
         setIsLoading(false);
       }
     };
+    // *** FIX for Duplicate Deals ***
+    // Only fetch if the deals array is empty to prevent re-fetching on hot reloads.
     if (!hasFetched.current) {
         hasFetched.current = true;
         fetchDeals();
     }
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   const addDeal = (newDealFromApi) => {
     const dealWithUIState = mapDealFromApi(newDealFromApi);
     setDeals(prevDeals => [dealWithUIState, ...prevDeals]);
-  };
-
-  const deleteDeal = async (dealId) => {
-    try {
-      const res = await fetch(`http://localhost:8000/api/deals/${dealId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete deal on the server.');
-      setDeals(prevDeals => prevDeals.filter(deal => deal.id !== dealId));
-    } catch (err) {
-      console.error("Delete deal error:", err);
-      // Optionally show an error to the user
-    }
-  };
-
-  const deleteFeedback = async (dealId, feedbackId) => {
-      try {
-          const res = await fetch(`http://localhost:8000/api/feedback/${feedbackId}`, { method: 'DELETE' });
-          if (!res.ok) throw new Error('Failed to delete feedback on the server.');
-          setDeals(prevDeals => prevDeals.map(deal => {
-              if (deal.id === dealId) {
-                  const updatedFeedback = deal.feedback.filter(fb => fb.id !== feedbackId);
-                  return { ...deal, feedback: updatedFeedback };
-              }
-              return deal;
-          }));
-      } catch (err) {
-          console.error("Delete feedback error:", err);
-      }
   };
 
   const submitFeedback = async (dealId, feedbackData) => {
@@ -80,8 +57,12 @@ export function DealProvider({ children }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(feedbackData),
       });
-      if (!res.ok) throw new Error('Failed to submit feedback.');
+
+      if (!res.ok) {
+        throw new Error('Failed to submit feedback.');
+      }
       const savedFeedback = await res.json();
+
       setDeals(prevDeals =>
         prevDeals.map(deal => {
           if (deal.id === dealId) {
@@ -94,17 +75,21 @@ export function DealProvider({ children }) {
       );
       return { success: true };
     } catch (err) {
+      console.error("Feedback submission error:", err);
       return { success: false, error: err.message };
     }
   };
 
-  const value = { deals, isLoading, error, addDeal, deleteDeal, deleteFeedback, submitFeedback };
+  const value = { deals, isLoading, error, addDeal, submitFeedback };
 
   return <DealContext.Provider value={value}>{children}</DealContext.Provider>;
 }
 
 export function useDeals() {
   const context = useContext(DealContext);
-  if (context === undefined) throw new Error('useDeals must be used within a DealProvider');
+  if (context === undefined) {
+    throw new Error('useDeals must be used within a DealProvider');
+  }
   return context;
 }
+

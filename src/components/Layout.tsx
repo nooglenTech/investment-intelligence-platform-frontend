@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
 
 export default function Layout({ children, onUploadClick }) {
     return (
@@ -14,13 +15,18 @@ export default function Layout({ children, onUploadClick }) {
                             <span className="text-2xl font-bold text-gray-800 hidden sm:block">IIP</span>
                         </Link>
                         <div className="flex items-center space-x-4">
-                            <button onClick={onUploadClick} className="flex items-center bg-blue-600 text-white rounded-md px-4 py-2 text-sm font-semibold hover:bg-blue-700 transition">
-                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                                <span>Upload CIM</span>
-                            </button>
-                            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                                <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
-                            </div>
+                            <SignedIn>
+                                <button onClick={onUploadClick} className="flex items-center bg-blue-600 text-white rounded-md px-4 py-2 text-sm font-semibold hover:bg-blue-700 transition">
+                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                                    <span>Upload CIM</span>
+                                </button>
+                                <UserButton afterSignOutUrl="/sign-in" />
+                            </SignedIn>
+                            <SignedOut>
+                                <Link href="/sign-in" className="text-sm font-semibold text-gray-600 hover:text-gray-900">
+                                    Sign In
+                                </Link>
+                            </SignedOut>
                         </div>
                     </div>
                 </div>

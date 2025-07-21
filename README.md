@@ -14,6 +14,13 @@ pnpm dev
 bun dev
 ```
 
+### Push to github by using 
+# git branch -M main → Renames your current branch to main (forcefully).
+
+# git remote add origin ... → Connects your local folder to your GitHub repo.
+
+# git push -u origin main → Pushes your local code to the main branch on GitHub and sets it as upstream.
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
