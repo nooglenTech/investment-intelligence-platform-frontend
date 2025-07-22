@@ -2,14 +2,12 @@ import React, { createContext, useState, useContext, useEffect, useRef } from 'r
 
 const DealContext = createContext(undefined);
 
-// Helper function to map API data to our UI's data structure
 const mapDealFromApi = (dealFromApi) => ({
   ...dealFromApi,
   title: dealFromApi.analysis_data?.company?.name || dealFromApi.file_name,
   analysis: dealFromApi.analysis_data,
   tags: [dealFromApi.analysis_data?.industry || "N/A"],
   feedback: dealFromApi.feedbacks || [],
-  // This would be replaced with a real user ID check
   currentUserHasSubmitted: (dealFromApi.feedbacks || []).length > 0,
 });
 
@@ -24,6 +22,7 @@ export function DealProvider({ children }) {
     const fetchDeals = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const res = await fetch('http://localhost:8000/api/deals');
         if (!res.ok) throw new Error('Failed to fetch deals.');
         const data = await res.json();
@@ -47,28 +46,28 @@ export function DealProvider({ children }) {
   };
 
   const deleteDeal = async (dealId) => {
+    const originalDeals = [...deals];
+    setDeals(prevDeals => prevDeals.filter(deal => deal.id !== dealId));
     try {
       const res = await fetch(`http://localhost:8000/api/deals/${dealId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete deal on the server.');
-      setDeals(prevDeals => prevDeals.filter(deal => deal.id !== dealId));
     } catch (err) {
       console.error("Delete deal error:", err);
+      setDeals(originalDeals);
+      setError("Could not delete deal. Please try again.");
     }
   };
 
   const deleteFeedback = async (dealId, feedbackId) => {
+      const originalDeals = [...deals];
+      setDeals(prevDeals => prevDeals.map(d => d.id === dealId ? {...d, feedback: d.feedback.filter(fb => fb.id !== feedbackId)} : d));
       try {
           const res = await fetch(`http://localhost:8000/api/feedback/${feedbackId}`, { method: 'DELETE' });
-          if (!res.ok) throw new Error('Failed to delete feedback on the server.');
-          setDeals(prevDeals => prevDeals.map(deal => {
-              if (deal.id === dealId) {
-                  const updatedFeedback = deal.feedback.filter(fb => fb.id !== feedbackId);
-                  return { ...deal, feedback: updatedFeedback };
-              }
-              return deal;
-          }));
+          if (!res.ok) throw new Error('Failed to delete feedback.');
       } catch (err) {
           console.error("Delete feedback error:", err);
+          setDeals(originalDeals);
+          setError("Could not delete feedback.");
       }
   };
 

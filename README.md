@@ -14,11 +14,11 @@ pnpm dev
 bun dev
 ```
 
-# git remote add origin https://github.com/nooglenTech/investment-intelligence-platform-frontend.git
-# git branch -M main
-# git add .
-# git commit -m "Fix broken git config and push latest code"
-# git push -u origin main
+git remote add origin https://github.com/nooglenTech/investment-intelligence-platform-frontend.git
+git branch -M main
+git add .
+git commit -m "Fix broken git config and push latest code"
+git push -u origin main
 
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
