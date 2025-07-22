@@ -14,12 +14,12 @@ pnpm dev
 bun dev
 ```
 
-### Push to github by using 
-# git branch -M main → Renames your current branch to main (forcefully).
+# git remote add origin https://github.com/nooglenTech/investment-intelligence-platform-frontend.git
+# git branch -M main
+# git add .
+# git commit -m "Fix broken git config and push latest code"
+# git push -u origin main
 
-# git remote add origin ... → Connects your local folder to your GitHub repo.
-
-# git push -u origin main → Pushes your local code to the main branch on GitHub and sets it as upstream.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 

@@ -1,19 +1,19 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkMiddleware } from '@clerk/nextjs/server';
 
-// Define the routes that should be protected
-const isProtectedRoute = createRouteMatcher([
-  '/', // Protect the dashboard
-  '/upload', // Protect the upload page
-  '/deals(.*)', // Protect all deal detail pages
-]);
-
-export default clerkMiddleware((auth, req) => {
-  // If the route is a protected route, enforce authentication.
-  if (isProtectedRoute(req)) {
-    auth().protect();
-  }
+export default clerkMiddleware({
+  // Add the sign-in and sign-up pages to the list of public routes
+  // so that users can access them without being logged in.
+  publicRoutes: ['/sign-in', '/sign-up'],
 });
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    // Skip Next.js internals and static files
+    '/((?!.*\\..*|_next).*)',
+    // Run middleware on all routes except static files
+    '/',
+    // Run middleware on API routes
+    '/(api|trpc)(.*)',
+  ],
 };
+
