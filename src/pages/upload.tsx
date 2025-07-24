@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useDeals } from '../context/DealContext';
+import { useAuth } from '@clerk/nextjs'; // Import useAuth here as well
 
 export default function UploadPage() {
   const { addDeal } = useDeals();
+  const { getToken } = useAuth(); // Get the getToken function
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
@@ -16,9 +18,12 @@ export default function UploadPage() {
     setErrorText("");
     const formData = new FormData();
     formData.append("file", selectedFile);
+
     try {
+      const token = await getToken(); // Get token for the request
       const res = await fetch("http://localhost:8000/analyze/", {
         method: "POST",
+        headers: { 'Authorization': `Bearer ${token}` }, // Add auth header
         body: formData,
       });
       if (!res.ok) throw new Error(await res.text());

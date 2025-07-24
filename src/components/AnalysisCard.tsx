@@ -1,119 +1,106 @@
-import React from "react";
+import React from 'react';
 
+// Define the shape of the data from the AI, including the new 'growth' object
 type AnalysisData = {
-  company?: {
-    name?: string;
+  company?: { 
+    name?: string; 
     description?: string;
+    business_model?: string;
+    products_services?: string;
+    customer_base?: string;
   };
   industry?: string;
-  financials?: {
-    actuals?: {
-      revenue?: string;
-      year?: string;
-      ebitda?: string;
-      margin?: string;
-      gross_margin?: string;
-      capex?: string;
-      capex_pct_revenue?: string;
-      fcf?: string;
-    };
-    estimates?: {
-      revenue?: string;
-      year?: string;
-      ebitda?: string;
-      capex?: string;
-      capex_pct_revenue?: string;
-      fcf?: string;
-    };
+  financials?: { actuals?: any; estimates?: any };
+  growth?: {
+    historical_revenue_cagr?: string;
+    projected_revenue_cagr?: string;
+    historical_fcf_cagr?: string;
+    projected_fcf_cagr?: string;
+    growth_commentary?: string;
   };
   thesis?: string;
   red_flags?: string;
   summary?: string;
   confidence_score?: number;
-  flagged_fields?: string[];
-  low_confidence_flags?: string[];
 };
 
-type Props = {
-  data: AnalysisData;
+// A reusable component for displaying a section to keep the code clean
+const InfoSection = ({ title, children, icon }) => {
+    // Don't render the section if there's no content
+    if (!children || (typeof children === 'string' && (children.trim() === 'N/A' || children.trim() === ''))) return null;
+    return (
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h3 className="font-semibold text-lg text-gray-800 mb-2 flex items-center">
+                <span className="mr-2 text-gray-500">{icon}</span>
+                {title}
+            </h3>
+            <div className="whitespace-pre-wrap text-sm text-gray-700 font-mono pl-7">
+                {children}
+            </div>
+        </div>
+    );
 };
 
-export default function AnalysisCard({ data }: Props) {
+export default function AnalysisCard({ data }: { data: AnalysisData }) {
   if (!data) return null;
 
   return (
-    <div className="whitespace-pre-wrap text-sm font-mono text-gray-800 space-y-4 mt-6">
-      {data.company?.name && (
-        <>
-          📌 Company: {data.company.name}
-          {"\n"}🔍 Description: {data.company.description || "N/A"}
-        </>
-      )}
+    <div className="space-y-4">
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <h3 className="font-semibold text-lg text-gray-800 mb-2 flex items-center">
+            <span className="mr-2 text-gray-500">📌</span>
+            Company: {data.company?.name || 'N/A'}
+        </h3>
+        <div className="text-sm text-gray-700 font-mono pl-7 space-y-2">
+            <p><span className="font-semibold">Description:</span> {data.company?.description || 'N/A'}</p>
+            <p><span className="font-semibold">Business Model:</span> {data.company?.business_model || 'N/A'}</p>
+            <p><span className="font-semibold">Products/Services:</span> {data.company?.products_services || 'N/A'}</p>
+            <p><span className="font-semibold">Customer Base:</span> {data.company?.customer_base || 'N/A'}</p>
+        </div>
+      </div>
 
-      {data.industry && (
-        <>
-          {"\n\n"}🏭 Industry: {data.industry}
-        </>
-      )}
+      <InfoSection title="Industry" icon="🏭">
+        {data.industry}
+      </InfoSection>
 
-      {(data.financials?.actuals || data.financials?.estimates) && (
-        <>
-          {"\n\n"}📊 Financials (Actuals):
-          {`\n- Revenue (Actual): ${data.financials?.actuals?.revenue || "N/A"} (${data.financials?.actuals?.year || "N/A"})`}
-          {`\n- EBITDA (Actual): ${data.financials?.actuals?.ebitda || "N/A"} (${data.financials?.actuals?.year || "N/A"})`}
-          {`\n- Margin: ${data.financials?.actuals?.margin || "N/A"}`}
-          {`\n- Gross Margin: ${data.financials?.actuals?.gross_margin || "N/A"}`}
-          {`\n- Capex: ${data.financials?.actuals?.capex || "N/A"} (${data.financials?.actuals?.capex_pct_revenue || "N/A"} of revenue)`}
-          {`\n- FCF: ${data.financials?.actuals?.fcf || "N/A"}`}
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <h3 className="font-semibold text-lg text-gray-800 mb-2 flex items-center">
+            <span className="mr-2 text-gray-500">📊</span>
+            Financials
+        </h3>
+        <div className="text-sm text-gray-700 font-mono pl-7 space-y-2">
+            <p className="font-semibold underline">Actuals:</p>
+            <p>Revenue: {data.financials?.actuals?.revenue || 'N/A'} ({data.financials?.actuals?.year || 'N/A'})</p>
+            <p>EBITDA: {data.financials?.actuals?.ebitda || 'N/A'}</p>
+            <p>FCF: {data.financials?.actuals?.fcf || 'N/A'}</p>
+            <p className="font-semibold underline mt-2">Estimates:</p>
+            <p>Revenue: {data.financials?.estimates?.revenue || 'N/A'} ({data.financials?.estimates?.year || 'N/A'})</p>
+            <p>EBITDA: {data.financials?.estimates?.ebitda || 'N/A'}</p>
+            <p>FCF: {data.financials?.estimates?.fcf || 'N/A'}</p>
+        </div>
+      </div>
 
-          {"\n\n"}📊 Financials (Estimates):
-          {`\n- Revenue (Est.): ${data.financials?.estimates?.revenue || "N/A"} (${data.financials?.estimates?.year || "N/A"})`}
-          {`\n- EBITDA (Est.): ${data.financials?.estimates?.ebitda || "N/A"} (${data.financials?.estimates?.year || "N/A"})`}
-          {`\n- Capex (Est.): ${data.financials?.estimates?.capex || "N/A"} (${data.financials?.estimates?.capex_pct_revenue || "N/A"} of revenue)`}
-          {`\n- FCF (Est.): ${data.financials?.estimates?.fcf || "N/A"}`}
-        </>
-      )}
+      {/* *** NEW GROWTH SECTION *** */}
+      <InfoSection title="Growth Analysis" icon="📈">
+        <div className="space-y-1">
+            <p><span className="font-semibold">Historical Revenue CAGR:</span> {data.growth?.historical_revenue_cagr || 'N/A'}</p>
+            <p><span className="font-semibold">Projected Revenue CAGR:</span> {data.growth?.projected_revenue_cagr || 'N/A'}</p>
+            <p><span className="font-semibold">Historical FCF CAGR:</span> {data.growth?.historical_fcf_cagr || 'N/A'}</p>
+            <p className="pt-2 italic">{data.growth?.growth_commentary}</p>
+        </div>
+      </InfoSection>
+      
+      <InfoSection title="Investment Thesis" icon="💡">
+        {data.thesis}
+      </InfoSection>
 
-      {data.thesis && (
-        <>
-          {"\n\n"}💡 Investment Thesis:
-          {"\n"}{data.thesis}
-        </>
-      )}
+      <InfoSection title="Red Flags" icon="⚠️">
+        {data.red_flags}
+      </InfoSection>
 
-      {data.red_flags && (
-        <>
-          {"\n\n"}⚠️ Red Flags:
-          {"\n"}{data.red_flags}
-        </>
-      )}
-
-      {data.summary && (
-        <>
-          {"\n\n"}📝 Summary:
-          {"\n"}{data.summary}
-        </>
-      )}
-
-      {typeof data.confidence_score === "number" && (
-        <>
-          {"\n\n"}📈 Confidence Score: {data.confidence_score}
-        </>
-      )}
-
-      {data.flagged_fields?.length > 0 && (
-        <>
-          {"\n\n"}⚠️ Flagged Fields:
-          {"\n"}{data.flagged_fields.join(", ")}
-        </>
-      )}
-
-      {data.low_confidence_flags?.length > 0 && (
-        <>
-          {"\n\n"}🔍 Low Confidence Flags:
-          {"\n"}{data.low_confidence_flags.map(flag => `- ${flag}`).join("\n")}
-        </>
-      )}
+      <InfoSection title="Summary" icon="�">
+        {data.summary}
+      </InfoSection>
     </div>
   );
 }
