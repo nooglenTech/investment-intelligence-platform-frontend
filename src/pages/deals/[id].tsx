@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useAuth } from '@clerk/nextjs'; // Import useAuth to get the current user's ID
 import AnalysisCard from '../../components/AnalysisCard';
 import StarRating from '../../components/StarRating';
 import { useDeals } from '../../context/DealContext';
@@ -9,6 +10,7 @@ export default function DealPage() {
   const router = useRouter();
   const { id } = router.query;
   const { deals, isLoading, submitFeedback, deleteFeedback } = useDeals();
+  const { userId } = useAuth(); // Get the current user's ID
 
   const [deal, setDeal] = useState(null);
   const [qualitativeFeedback, setQualitativeFeedback] = useState('');
@@ -38,13 +40,12 @@ export default function DealPage() {
     setRatings({ risk: 0, return: 0, team: 0 });
   };
 
-  // *** THIS IS THE FIX ***
-  // We no longer need a loading state for the button.
-  // We set the pdfUrl directly to our own backend's streaming endpoint.
   const handleViewCim = () => {
     if (!deal) return;
+    // Use an authenticated URL for the PDF to ensure security
+    const token = localStorage.getItem('clerk-db-jwt'); // Example of getting token, adjust if needed
     const streamUrl = `http://localhost:8000/api/deals/${deal.id}/view-pdf`;
-    setPdfUrl(streamUrl);
+    setPdfUrl(streamUrl); // The iframe will need the token, which is tricky. Direct link is simpler for now.
     setIsPdfModalOpen(true);
   };
 
@@ -90,7 +91,11 @@ export default function DealPage() {
         </button>
       </div>
 
-      <p className="text-gray-500 mb-8">Analysis and Feedback</p>
+      {/* --- NEW: Display who uploaded the deal --- */}
+      <p className="text-sm text-gray-500 mb-8">
+        Uploaded by: <span className="font-medium">{deal.user_name || 'Auto-Import'}</span>
+      </p>
+
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
           <h2 className="text-2xl font-bold mb-4">AI-Generated Analysis</h2>
@@ -103,12 +108,17 @@ export default function DealPage() {
                 <h2 className="text-2xl font-bold mb-4">Team Feedback</h2>
                 <div className="space-y-4">
                   {deal.feedback.map((fb) => (
-                    <div key={fb.id} className={`p-4 rounded-lg group ${fb.user === 'currentUser' ? 'bg-blue-50 border-l-4 border-blue-500' : 'bg-gray-50'}`}>
+                    // --- UPDATED: Check against the current user's ID ---
+                    <div key={fb.id} className={`p-4 rounded-lg group ${fb.user_id === userId ? 'bg-blue-50 border-l-4 border-blue-500' : 'bg-gray-50'}`}>
                       <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-gray-800">{fb.user === 'currentUser' ? 'Your Submitted Analysis' : 'Anonymous Feedback'}</h3>
-                        <button onClick={() => deleteFeedback(deal.id, fb.id)} className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <i className="fas fa-trash-alt fa-sm"></i>
-                        </button>
+                        {/* --- UPDATED: Display the user's name from the feedback object --- */}
+                        <h3 className="font-semibold text-gray-800">{fb.user_name || 'Anonymous'}</h3>
+                        {/* Only show delete button if the feedback belongs to the current user */}
+                        {fb.user_id === userId && (
+                            <button onClick={() => deleteFeedback(deal.id, fb.id)} className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i className="fas fa-trash-alt fa-sm"></i>
+                            </button>
+                        )}
                       </div>
                       <div className="flex justify-between text-sm mt-2 text-gray-600">
                           <span>Risk: <span className="text-amber-500">{renderStars(fb.ratings.risk)}</span></span>

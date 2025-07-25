@@ -1,5 +1,5 @@
-import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
-import { useAuth } from '@clerk/nextjs'; // Import the useAuth hook from Clerk
+import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from '@clerk/nextjs';
 
 const DealContext = createContext(undefined);
 
@@ -9,62 +9,82 @@ const mapDealFromApi = (dealFromApi, currentUserId) => ({
   title: dealFromApi.analysis_data?.company?.name || dealFromApi.file_name,
   analysis: dealFromApi.analysis_data,
   tags: [dealFromApi.analysis_data?.industry || "N/A"],
-  feedback: (dealFromApi.feedbacks || []).map(fb => ({...fb, user: fb.user_id === currentUserId ? 'currentUser' : 'anonymous'})),
-  // Determine if the current user has submitted feedback for this deal
+  feedback: dealFromApi.feedbacks || [],
   currentUserHasSubmitted: (dealFromApi.feedbacks || []).some(fb => fb.user_id === currentUserId),
 });
 
 
 export function DealProvider({ children }) {
-  const { getToken, userId } = useAuth(); // Get the getToken function and userId from Clerk
+  const { getToken, userId } = useAuth();
   const [deals, setDeals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const hasFetched = useRef(false);
 
-  // --- NEW: API Fetcher with Authentication ---
   const authedFetch = async (url, options = {}) => {
     const token = await getToken();
     const headers = {
       ...options.headers,
       'Authorization': `Bearer ${token}`,
     };
-    // For FormData, we don't set Content-Type, the browser does it.
     if (!(options.body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
     }
     return fetch(url, { ...options, headers });
   };
 
+  // Use useCallback to memoize fetchDeals, preventing unnecessary re-renders
+  const fetchDeals = useCallback(async () => {
+    // No need to set loading to true for background polls
+    // setIsLoading(true); 
+    try {
+      setError(null);
+      const res = await authedFetch('http://localhost:8000/api/deals');
+      if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || 'Failed to fetch deals.');
+      }
+      const data = await res.json();
+      const dealsWithUIState = data.map(deal => mapDealFromApi(deal, userId));
+      setDeals(dealsWithUIState);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      // Only set loading to false on the initial fetch
+      if (isLoading) setIsLoading(false);
+    }
+  }, [userId, getToken, isLoading]); // Add dependencies
+
 
   useEffect(() => {
-    // Don't fetch deals if the user is not logged in yet
     if (!userId) {
         setIsLoading(false);
         return;
     };
 
-    const fetchDeals = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const res = await authedFetch('http://localhost:8000/api/deals');
-        if (!res.ok) throw new Error('Failed to fetch deals.');
-        const data = await res.json();
-        const dealsWithUIState = data.map(deal => mapDealFromApi(deal, userId));
-        setDeals(dealsWithUIState);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (!hasFetched.current) {
+    if (!hasFetched.current && userId) {
         hasFetched.current = true;
         fetchDeals();
     }
-  }, [userId]); // Re-run this effect when the userId becomes available
+  }, [userId, fetchDeals]);
+
+  // --- NEW: Polling logic for auto-refresh ---
+  useEffect(() => {
+    // Check if there are any deals with the status "Analyzing"
+    const isAnalyzing = deals.some(deal => deal.status === 'Analyzing');
+
+    if (isAnalyzing) {
+      // If a deal is analyzing, set up an interval to re-fetch the deals list
+      const pollInterval = setInterval(() => {
+        console.log("Polling for deal status updates...");
+        fetchDeals();
+      }, 5000); // Check every 5 seconds
+
+      // This is a cleanup function that React runs when the component unmounts
+      // or when the `deals` array changes. It stops the polling.
+      return () => clearInterval(pollInterval);
+    }
+  }, [deals, fetchDeals]); // This effect runs whenever the list of deals changes
 
   const addDeal = (newDealFromApi) => {
     const dealWithUIState = mapDealFromApi(newDealFromApi, userId);
@@ -95,8 +115,7 @@ export function DealProvider({ children }) {
       setDeals(prevDeals =>
         prevDeals.map(deal => {
           if (deal.id === dealId) {
-            const newFeedbackWithUser = { ...savedFeedback, user: 'currentUser' };
-            const updatedFeedback = [...deal.feedback, newFeedbackWithUser];
+            const updatedFeedback = [...deal.feedback, savedFeedback];
             return { ...deal, feedback: updatedFeedback, currentUserHasSubmitted: true };
           }
           return deal;
@@ -108,8 +127,6 @@ export function DealProvider({ children }) {
     }
   };
   
-  // deleteFeedback doesn't need to be changed as it will use authedFetch internally via other functions
-  // but for completeness, let's imagine it's called directly
    const deleteFeedback = async (dealId, feedbackId) => {
       const originalDeals = [...deals];
       setDeals(prevDeals => prevDeals.map(d => d.id === dealId ? {...d, feedback: d.feedback.filter(fb => fb.id !== feedbackId)} : d));
@@ -121,7 +138,6 @@ export function DealProvider({ children }) {
           setError("Could not delete feedback.");
       }
   };
-
 
   const value = { deals, isLoading, error, addDeal, deleteDeal, submitFeedback, deleteFeedback };
 
