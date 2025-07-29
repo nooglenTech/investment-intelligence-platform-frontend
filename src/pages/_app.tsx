@@ -2,24 +2,22 @@ import React from 'react';
 import '../styles/globals.css';
 import Layout from '../components/Layout';
 import type { AppProps } from "next/app";
-import { useRouter } from 'next/router';
 import { DealProvider } from '../context/DealContext';
 import { ClerkProvider } from '@clerk/nextjs';
 
-export default function MyApp({ Component, pageProps }: AppProps) {
-  const router = useRouter();
+// Set the public key for Clerk
+const clerkPubKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-  const handleUploadClick = () => {
-    router.push('/upload');
-  };
-
+function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <ClerkProvider {...pageProps}>
+    <ClerkProvider publishableKey={clerkPubKey} {...pageProps}>
       <DealProvider>
-        <Layout onUploadClick={handleUploadClick}>
+        <Layout>
           <Component {...pageProps} />
         </Layout>
       </DealProvider>
     </ClerkProvider>
   );
 }
+
+export default MyApp;

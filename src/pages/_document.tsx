@@ -1,11 +1,19 @@
+// src/pages/_document.tsx
+
 import { Html, Head, Main, NextScript } from "next/document";
 
 export default function Document() {
   return (
-    <Html lang="en">
+    <Html lang="en" className="dark">
       <Head>
-        {/* *** FIX for Star Ratings *** */}
-        {/* Add the Font Awesome stylesheet to the document head */}
+        {/* Google Font: Inter */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap"
+          rel="stylesheet"
+        />
+        {/* Font Awesome for star icons etc. */}
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -14,7 +22,7 @@ export default function Document() {
           referrerPolicy="no-referrer"
         />
       </Head>
-      <body className="antialiased">
+      <body className="min-h-screen">
         <Main />
         <NextScript />
       </body>

@@ -1,63 +1,110 @@
-import React from 'react';
+// src/components/DealCard.tsx
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useDeals } from '../context/DealContext';
 
-export default function DealCard({ deal }) {
-  const { deleteDeal } = useDeals();
-  
-  // The old statusColors variable is no longer needed.
-  const industry = deal.analysis?.industry || 'N/A';
-  const revenue = deal.analysis?.financials?.actuals?.revenue || 'N/A';
-  const ebitda = deal.analysis?.financials?.actuals?.ebitda || 'N/A';
+export default function DealCard({ deal, index }) {
+    const { deleteDeal } = useDeals();
+    const [isComplete, setIsComplete] = useState(deal.status === 'Complete');
 
-  const handleDelete = (e) => {
-    // Stop the click from navigating to the deal page
-    e.stopPropagation();
-    e.preventDefault(); 
-    if (window.confirm(`Are you sure you want to delete "${deal.title}"?`)) {
-      deleteDeal(deal.id);
-    }
-  };
+    // This effect will trigger the fade-out animation when a deal's status changes to 'Complete'
+    useEffect(() => {
+        if (deal.status === 'Complete') {
+            const timer = setTimeout(() => setIsComplete(true), 700); // Delay matches animation
+            return () => clearTimeout(timer);
+        } else {
+            setIsComplete(false);
+        }
+    }, [deal.status]);
 
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
-      <div className="p-5">
-        <div className="flex justify-between items-start">
-          <h2 className="text-xl font-bold text-gray-900 pr-4">{deal.title}</h2>
-          
-          {/* --- UPDATED SECTION --- */}
-          <div className="flex-shrink-0 flex items-center gap-3">
-            {/* This span replaces the old status pill */}
-            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full">
-              {deal.user_name || 'Auto-Import'}
-            </span>
-            
-            {/* This is the existing delete button */}
-            <button onClick={handleDelete} className="text-gray-400 hover:text-red-500 transition-colors">
-              <i className="fas fa-trash-alt"></i>
-            </button>
-          </div>
-          {/* --- END UPDATED SECTION --- */}
+    const handleDelete = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (window.confirm(`Are you sure you want to delete "${deal.title}"?`)) {
+            deleteDeal(deal.id);
+        }
+    };
 
-        </div>
-        <div className="flex items-center space-x-6 mt-3 mb-4 border-t border-b border-gray-100 py-2">
-            <div>
-                <p className="text-xs text-gray-500">Industry</p>
-                <p className="text-sm font-semibold text-gray-800">{industry}</p>
-            </div>
-            <div>
-                <p className="text-xs text-gray-500">Revenue (Actual)</p>
-                <p className="text-sm font-semibold text-gray-800">{revenue}</p>
-            </div>
-            <div>
-                <p className="text-xs text-gray-500">EBITDA (Actual)</p>
-                <p className="text-sm font-semibold text-gray-800">{ebitda}</p>
-            </div>
-        </div>
-        <Link href={`/deals/${deal.id}`} className="w-full sm:w-auto inline-block text-center bg-white border border-gray-300 text-gray-700 rounded-md px-4 py-2 text-sm font-semibold hover:bg-gray-50 transition">
-          View Analysis & Feedback
+    const getStatusInfo = () => {
+        switch (deal.status) {
+            case 'Analyzing':
+                return { text: 'Analyzing...', color: 'sky', progress: 0, pulsing: true, isAnimating: true };
+            case 'Complete':
+                return { text: 'Review Complete', color: 'green', progress: 100, pulsing: false, isAnimating: false };
+            case 'Failed':
+                 return { text: 'Analysis Failed', color: 'red', progress: 100, pulsing: false, isAnimating: false };
+            default:
+                return { text: 'Feedback Required', color: 'amber', progress: 80, pulsing: true, isAnimating: false };
+        }
+    };
+
+    const statusInfo = getStatusInfo();
+    const totalTeamMembers = 5; // Placeholder for total team members
+
+    const statusClasses = {
+        amber: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+        green: 'bg-green-500/20 text-green-400 border-green-500/30',
+        sky: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
+        red: 'bg-red-500/20 text-red-400 border-red-500/30',
+    };
+
+    const progressClasses = {
+        amber: 'bg-amber-500',
+        green: 'bg-green-500',
+        sky: 'bg-sky-500',
+        red: 'bg-red-500',
+    };
+    
+    return (
+        <Link href={`/deals/${deal.id}`} legacyBehavior>
+            <a className="deal-card group glass-panel p-5 rounded-xl flex flex-col gap-4 cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-sky-500/10 transition-all duration-300" style={{ animationDelay: `${index * 0.1 + 0.2}s` }}>
+                <div className="flex justify-between items-start">
+                    <h3 className="text-xl font-bold text-slate-100 pr-2">{deal.title}</h3>
+                    <div className="flex items-center gap-2">
+                        <div className={`px-3 py-1 text-xs font-semibold rounded-full border ${statusClasses[statusInfo.color]} ${statusInfo.pulsing ? 'pulse-glow-amber' : ''}`}>
+                            {statusInfo.text}
+                        </div>
+                        <button onClick={handleDelete} className="text-slate-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                            <i className="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <p className="text-slate-400 text-sm flex-grow">
+                    {deal.analysis?.summary ? `${deal.analysis.summary.substring(0, 100)}...` : `Uploaded by ${deal.user_name}`}
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                    {deal.tags?.map(tag => (
+                       <span key={tag} className="bg-slate-700 text-slate-300 text-xs font-medium px-2.5 py-1 rounded-full">{tag}</span>
+                    ))}
+                </div>
+                <div className="mt-auto pt-4">
+                    {isComplete ? (
+                        <div>
+                            <div className="flex justify-between items-center mb-1 text-sm text-slate-400">
+                                <span>Feedback Progress</span>
+                                <span>{deal.feedback.length} / {totalTeamMembers}</span>
+                            </div>
+                            <div className="w-full bg-slate-700 rounded-full h-2">
+                                <div className="bg-green-500 h-2 rounded-full" style={{ width: `${(deal.feedback.length / totalTeamMembers) * 100}%` }}></div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className={deal.status === 'Complete' ? 'fade-out-up-anim' : ''}>
+                            <div className="flex justify-between items-center mb-1 text-sm text-slate-400">
+                                <span>Analysis Progress</span>
+                                {!statusInfo.isAnimating && <span>{statusInfo.progress}%</span>}
+                            </div>
+                            <div className="w-full bg-slate-700 rounded-full h-2">
+                                <div 
+                                    className={`${progressClasses[statusInfo.color]} h-2 rounded-full ${statusInfo.isAnimating ? 'progress-bar-indeterminate' : ''}`} 
+                                    style={{ width: statusInfo.isAnimating ? undefined : `${statusInfo.progress}%`, transition: 'width 1s ease-in-out' }}
+                                ></div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </a>
         </Link>
-      </div>
-    </div>
-  );
-}
+    );
+};

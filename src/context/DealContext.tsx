@@ -1,3 +1,5 @@
+// src/context/DealContext.tsx
+
 import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 
@@ -20,6 +22,7 @@ export function DealProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const hasFetched = useRef(false);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const authedFetch = async (url, options = {}) => {
     const token = await getToken();
@@ -33,13 +36,10 @@ export function DealProvider({ children }) {
     return fetch(url, { ...options, headers });
   };
 
-  // Use useCallback to memoize fetchDeals, preventing unnecessary re-renders
   const fetchDeals = useCallback(async () => {
-    // No need to set loading to true for background polls
-    // setIsLoading(true); 
     try {
       setError(null);
-      const res = await authedFetch('http://localhost:8000/api/deals');
+      const res = await authedFetch(`${apiUrl}/api/deals`);
       if (!res.ok) {
           const errData = await res.json();
           throw new Error(errData.detail || 'Failed to fetch deals.');
@@ -50,10 +50,9 @@ export function DealProvider({ children }) {
     } catch (err) {
       setError(err.message);
     } finally {
-      // Only set loading to false on the initial fetch
       if (isLoading) setIsLoading(false);
     }
-  }, [userId, getToken, isLoading]); // Add dependencies
+  }, [userId, getToken, isLoading, apiUrl]);
 
 
   useEffect(() => {
@@ -68,23 +67,15 @@ export function DealProvider({ children }) {
     }
   }, [userId, fetchDeals]);
 
-  // --- NEW: Polling logic for auto-refresh ---
   useEffect(() => {
-    // Check if there are any deals with the status "Analyzing"
     const isAnalyzing = deals.some(deal => deal.status === 'Analyzing');
-
     if (isAnalyzing) {
-      // If a deal is analyzing, set up an interval to re-fetch the deals list
       const pollInterval = setInterval(() => {
-        console.log("Polling for deal status updates...");
         fetchDeals();
-      }, 5000); // Check every 5 seconds
-
-      // This is a cleanup function that React runs when the component unmounts
-      // or when the `deals` array changes. It stops the polling.
+      }, 5000); 
       return () => clearInterval(pollInterval);
     }
-  }, [deals, fetchDeals]); // This effect runs whenever the list of deals changes
+  }, [deals, fetchDeals]);
 
   const addDeal = (newDealFromApi) => {
     const dealWithUIState = mapDealFromApi(newDealFromApi, userId);
@@ -95,7 +86,7 @@ export function DealProvider({ children }) {
     const originalDeals = [...deals];
     setDeals(prevDeals => prevDeals.filter(deal => deal.id !== dealId));
     try {
-      const res = await authedFetch(`http://localhost:8000/api/deals/${dealId}`, { method: 'DELETE' });
+      const res = await authedFetch(`${apiUrl}/api/deals/${dealId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete deal on the server.');
     } catch (err) {
       setDeals(originalDeals);
@@ -105,7 +96,7 @@ export function DealProvider({ children }) {
 
   const submitFeedback = async (dealId, feedbackData) => {
     try {
-      const res = await authedFetch(`http://localhost:8000/api/deals/${dealId}/feedback`, {
+      const res = await authedFetch(`${apiUrl}/api/deals/${dealId}/feedback`, {
         method: 'POST',
         body: JSON.stringify(feedbackData),
       });
@@ -131,7 +122,7 @@ export function DealProvider({ children }) {
       const originalDeals = [...deals];
       setDeals(prevDeals => prevDeals.map(d => d.id === dealId ? {...d, feedback: d.feedback.filter(fb => fb.id !== feedbackId)} : d));
       try {
-          const res = await authedFetch(`http://localhost:8000/api/feedback/${feedbackId}`, { method: 'DELETE' });
+          const res = await authedFetch(`${apiUrl}/api/feedback/${feedbackId}`, { method: 'DELETE' });
           if (!res.ok) throw new Error('Failed to delete feedback.');
       } catch (err) {
           setDeals(originalDeals);
