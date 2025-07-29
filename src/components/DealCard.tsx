@@ -6,15 +6,17 @@ import { useDeals } from '../context/DealContext';
 
 export default function DealCard({ deal, index }) {
     const { deleteDeal } = useDeals();
-    const [isComplete, setIsComplete] = useState(deal.status === 'Complete');
+    // This state determines whether to show the "Analysis Progress" or "Feedback Progress" UI.
+    const [isAnalysisComplete, setIsAnalysisComplete] = useState(deal.status === 'Complete');
 
-    // This effect will trigger the fade-out animation when a deal's status changes to 'Complete'
+    // This effect can be used to trigger animations when the status changes.
     useEffect(() => {
         if (deal.status === 'Complete') {
-            const timer = setTimeout(() => setIsComplete(true), 700); // Delay matches animation
+            // A timer can allow an animation to finish before the UI switches to the feedback view.
+            const timer = setTimeout(() => setIsAnalysisComplete(true), 700); // Delay matches animation
             return () => clearTimeout(timer);
         } else {
-            setIsComplete(false);
+            setIsAnalysisComplete(false);
         }
     }, [deal.status]);
 
@@ -26,21 +28,40 @@ export default function DealCard({ deal, index }) {
         }
     };
 
+    /**
+     * Determines the status text, color, and behavior based on the deal's state.
+     * When analysis is complete, status is driven by feedback count.
+     */
     const getStatusInfo = () => {
+        const totalTeamMembers = 5; // Placeholder for total expected feedback
+
+        // If analysis is done, the status badge reflects the feedback stage.
+        if (deal.status === 'Complete') {
+            const feedbackCount = deal.feedback?.length || 0;
+
+            if (feedbackCount === totalTeamMembers) {
+                return { text: 'Review Complete', color: 'green', pulsing: false };
+            }
+            if (feedbackCount > 0) {
+                return { text: 'In Progress', color: 'sky', pulsing: false };
+            }
+            return { text: 'Feedback Needed', color: 'amber', pulsing: true };
+        }
+
+        // Otherwise, show the analysis status.
         switch (deal.status) {
             case 'Analyzing':
                 return { text: 'Analyzing...', color: 'sky', progress: 0, pulsing: true, isAnimating: true };
-            case 'Complete':
-                return { text: 'Review Complete', color: 'green', progress: 100, pulsing: false, isAnimating: false };
             case 'Failed':
                  return { text: 'Analysis Failed', color: 'red', progress: 100, pulsing: false, isAnimating: false };
             default:
+                // Fallback for any other status
                 return { text: 'Feedback Required', color: 'amber', progress: 80, pulsing: true, isAnimating: false };
         }
     };
 
     const statusInfo = getStatusInfo();
-    const totalTeamMembers = 5; // Placeholder for total team members
+    const totalTeamMembers = 5; // Used for the feedback progress display
 
     const statusClasses = {
         amber: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
@@ -79,7 +100,7 @@ export default function DealCard({ deal, index }) {
                     ))}
                 </div>
                 <div className="mt-auto pt-4">
-                    {isComplete ? (
+                    {isAnalysisComplete ? (
                         <div>
                             <div className="flex justify-between items-center mb-1 text-sm text-slate-400">
                                 <span>Feedback Progress</span>

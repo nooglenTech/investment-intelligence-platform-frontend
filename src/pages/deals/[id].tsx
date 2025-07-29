@@ -26,15 +26,15 @@ export default function DealPage() {
   const [showDeleteFeedbackConfirm, setShowDeleteFeedbackConfirm] = useState(false);
   const [feedbackToDelete, setFeedbackToDelete] = useState(null);
 
-  const currentUserFeedback = deal?.feedback.find(fb => fb.user_id === user?.id);
-  const teamFeedback = deal?.feedback.filter(fb => fb.user_id !== user?.id) || [];
-
   useEffect(() => {
     if (!isLoading && deals.length > 0 && id) {
       const foundDeal = deals.find(d => d.id === Number(id));
       setDeal(foundDeal);
     }
   }, [id, deals, isLoading]);
+
+  const currentUserFeedback = deal?.feedback.find(fb => fb.user_id === user?.id);
+  const teamFeedback = deal?.feedback.filter(fb => fb.user_id !== user?.id) || [];
 
   // Pre-fill form if user has feedback, otherwise clear it
   useEffect(() => {
@@ -58,7 +58,6 @@ export default function DealPage() {
     const feedbackData = { comment, ratings };
     await submitFeedback(deal.id, feedbackData);
     setIsSubmitting(false);
-    // No need to clear the form, as it will be re-populated with the latest feedback
   };
   
   const handleViewCim = async () => {
@@ -79,9 +78,7 @@ export default function DealPage() {
     }
   };
 
-  const handleDeleteDeal = () => {
-    setShowDeleteDealConfirm(true);
-  }
+  const handleDeleteDeal = () => setShowDeleteDealConfirm(true);
 
   const confirmDeleteDeal = () => {
     deleteDeal(deal.id);
@@ -102,12 +99,6 @@ export default function DealPage() {
       setFeedbackToDelete(null);
   }
 
-  if (isLoading || !deal) {
-    return (
-      <div className="text-center py-10 text-slate-400">Loading Deal...</div>
-    );
-  }
-  
   const closePdfModal = () => {
       if(pdfUrl) {
           URL.revokeObjectURL(pdfUrl);
@@ -116,24 +107,62 @@ export default function DealPage() {
       setPdfUrl('');
   }
 
+  if (isLoading || !deal) {
+    return (
+      <div className="text-center py-10 text-slate-400">Loading Deal...</div>
+    );
+  }
+
+  // --- EXTRACTING ALL DATA FROM THE ANALYSIS OBJECT ---
   const analysis = deal.analysis || {};
   const company = analysis.company || {};
   const financials = analysis.financials || {};
+  const growth = analysis.growth || {};
+  const thesis = analysis.thesis || '';
+  const confidence_score = analysis.confidence_score;
+  const flagged_fields = analysis.flagged_fields || [];
+  const low_confidence_flags = analysis.low_confidence_flags || [];
+  const confidence_breakdown = analysis.confidence_breakdown || {};
 
-  const renderRedFlags = () => {
-    const redFlagsData = analysis.red_flags;
-    if (!redFlagsData) {
-        return <li>No red flags identified.</li>;
+  // --- HELPER FUNCTIONS FOR RENDERING ---
+
+  // Renders text that might be a string with newlines or an array
+  const renderBulletedText = (text, defaultMessage = 'No data provided.') => {
+    if (!text || (Array.isArray(text) && text.length === 0)) {
+        return <li>{defaultMessage}</li>;
     }
-    if (Array.isArray(redFlagsData)) {
-        return redFlagsData.map((flag, i) => flag && <li key={i}>{flag}</li>);
+    if (Array.isArray(text)) {
+        return text.map((item, i) => item && <li key={i}>{item}</li>);
     }
-    if (typeof redFlagsData === 'string') {
-        return redFlagsData.split('\n').map((flag, i) => flag.trim() && <li key={i}>{flag.trim()}</li>);
+    if (typeof text === 'string') {
+        const lines = text.split('\n').filter(line => line.trim() !== '');
+        if (lines.length === 0) return <li>{defaultMessage}</li>;
+        return lines.map((line, i) => <li key={i}>{line.trim().replace(/^- /, '')}</li>);
     }
-    return <li>Could not parse red flags.</li>;
+    return <li>Could not parse content.</li>;
   };
 
+  // Renders the nested confidence breakdown object
+  const renderConfidenceBreakdown = (breakdown) => {
+    if (!breakdown || typeof breakdown !== 'object' || Object.keys(breakdown).length === 0) {
+      return <p className="text-slate-400">No breakdown available.</p>;
+    }
+    return (
+      <ul className="list-disc list-inside pl-4 space-y-1 text-sm">
+        {Object.entries(breakdown).map(([key, value]) => (
+          <li key={key}>
+            <span className="font-semibold capitalize">{key.replace(/_/g, ' ')}:</span>
+            {typeof value === 'object' && value !== null ? (
+              renderConfidenceBreakdown(value)
+            ) : (
+              <span className="ml-2 text-amber-400">{String(value)}</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    );
+  };
+  
   const renderStars = (score) => '★'.repeat(score || 0) + '☆'.repeat(5 - (score || 0));
 
   return (
@@ -217,33 +246,98 @@ export default function DealPage() {
             <Accordion title="Executive Summary" defaultOpen>
                 <p className="text-slate-300 leading-relaxed">{analysis.summary || 'No summary available.'}</p>
             </Accordion>
+            
             <Accordion title="Company Overview">
                  <div className="text-slate-300 leading-relaxed space-y-2">
+                    <p><strong>Company Name:</strong> {company.name || 'N/A'}</p>
                     <p><strong>Description:</strong> {company.description || 'N/A'}</p>
-                    <p><strong>Business Model:</strong> {company.business_model || 'N/A'}</p>
-                    <p><strong>Products/Services:</strong> {company.products_services || 'N/A'}</p>
+                    <p><strong>Industry:</strong> {analysis.industry || 'N/A'}</p>
                  </div>
             </Accordion>
+
+            <Accordion title="Investment Thesis">
+                <ul className="list-disc list-inside space-y-2 text-slate-300">
+                    {renderBulletedText(thesis, 'No thesis provided.')}
+                </ul>
+            </Accordion>
+
             <Accordion title="Financial Overview">
-              <div className="text-slate-300 leading-relaxed space-y-4">
-                <div>
+              <div className="text-slate-300 leading-relaxed grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <h4 className="font-semibold text-slate-200 mb-2">Actuals ({financials.actuals?.year || 'N/A'})</h4>
-                  <p><strong>Revenue:</strong> {financials.actuals?.revenue || 'N/A'}</p>
-                  <p><strong>EBITDA:</strong> {financials.actuals?.ebitda || 'N/A'}</p>
-                  <p><strong>FCF:</strong> {financials.actuals?.fcf || 'N/A'}</p>
+                  <div className="space-y-1 text-sm">
+                    <p><strong>Revenue:</strong> {financials.actuals?.revenue || 'N/A'}</p>
+                    <p><strong>EBITDA:</strong> {financials.actuals?.ebitda || 'N/A'}</p>
+                    <p><strong>EBITDA Margin:</strong> {financials.actuals?.margin || 'N/A'}</p>
+                    <p><strong>Gross Margin:</strong> {financials.actuals?.gross_margin || 'N/A'}</p>
+                    <p><strong>FCF:</strong> {financials.actuals?.fcf || 'N/A'}</p>
+                    <p><strong>Capex:</strong> {financials.actuals?.capex || 'N/A'}</p>
+                    <p><strong>Capex as % of Revenue:</strong> {financials.actuals?.capex_pct_revenue || 'N/A'}</p>
+                  </div>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <h4 className="font-semibold text-slate-200 mb-2">Estimates ({financials.estimates?.year || 'N/A'})</h4>
-                  <p><strong>Revenue:</strong> {financials.estimates?.revenue || 'N/A'}</p>
-                  <p><strong>EBITDA:</strong> {financials.estimates?.ebitda || 'N/A'}</p>
-                  <p><strong>FCF:</strong> {financials.estimates?.fcf || 'N/A'}</p>
+                  <div className="space-y-1 text-sm">
+                    <p><strong>Revenue:</strong> {financials.estimates?.revenue || 'N/A'}</p>
+                    <p><strong>EBITDA:</strong> {financials.estimates?.ebitda || 'N/A'}</p>
+                    <p><strong>FCF:</strong> {financials.estimates?.fcf || 'N/A'}</p>
+                    <p><strong>Capex:</strong> {financials.estimates?.capex || 'N/A'}</p>
+                    <p><strong>Capex as % of Revenue:</strong> {financials.estimates?.capex_pct_revenue || 'N/A'}</p>
+                  </div>
                 </div>
               </div>
             </Accordion>
+
+            <Accordion title="Growth Analysis">
+                <div className="text-slate-300 leading-relaxed space-y-4">
+                    <div>
+                        <h4 className="font-semibold text-slate-200 mb-2">Compound Annual Growth Rate (CAGR)</h4>
+                        <p><strong>Historical Revenue CAGR:</strong> {growth.historical_revenue_cagr || 'N/A'}</p>
+                        <p><strong>Projected Revenue CAGR:</strong> {growth.projected_revenue_cagr || 'N/A'}</p>
+                        <p><strong>Historical FCF CAGR:</strong> {growth.historical_fcf_cagr || 'N/A'}</p>
+                        <p><strong>Projected FCF CAGR:</strong> {growth.projected_fcf_cagr || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-slate-200 mt-4 mb-2">Growth Commentary</h4>
+                        <ul className="list-disc list-inside space-y-2">
+                            {renderBulletedText(growth.growth_commentary, 'No growth commentary provided.')}
+                        </ul>
+                    </div>
+                </div>
+            </Accordion>
+
             <Accordion title="Red Flags & Risks">
                  <ul className="list-disc list-inside space-y-2 text-slate-300">
-                    {renderRedFlags()}
+                    {renderBulletedText(analysis.red_flags, 'No red flags identified.')}
                  </ul>
+            </Accordion>
+
+            <Accordion title="Confidence Analysis">
+                <div className="text-slate-300 leading-relaxed space-y-6">
+                    <div>
+                        <h4 className="font-semibold text-slate-200 mb-2">Overall Confidence Score</h4>
+                        <div className="w-full bg-slate-700 rounded-full h-2.5">
+                            <div className="bg-sky-500 h-2.5 rounded-full" style={{ width: `${confidence_score || 0}%` }}></div>
+                        </div>
+                        <p className="text-center text-sm mt-1">{confidence_score || 0}/100</p>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-slate-200 mb-2">Flagged Fields</h4>
+                        <ul className="list-disc list-inside space-y-2">
+                            {renderBulletedText(flagged_fields, 'No fields flagged.')}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-slate-200 mb-2">Low Confidence Flags</h4>
+                         <ul className="list-disc list-inside space-y-2">
+                            {renderBulletedText(low_confidence_flags, 'No low confidence flags.')}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-slate-200 mb-2">Confidence Breakdown</h4>
+                        {renderConfidenceBreakdown(confidence_breakdown)}
+                    </div>
+                </div>
             </Accordion>
         </div>
 
@@ -274,7 +368,6 @@ export default function DealPage() {
                     <div key={fb.id} className="bg-slate-700/50 p-3 rounded-lg group">
                       <div className="flex justify-between items-start">
                           <span className="text-xs font-semibold text-slate-400">{fb.user_name}</span>
-                          {/* --- UPDATED DELETE BUTTON --- */}
                           <button 
                             onClick={() => handleDeleteFeedback(fb.id)} 
                             className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
