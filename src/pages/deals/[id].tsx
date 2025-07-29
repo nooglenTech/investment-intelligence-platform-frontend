@@ -36,11 +36,15 @@ export default function DealPage() {
     }
   }, [id, deals, isLoading]);
 
-  // Pre-fill the form if the user has already submitted feedback
+  // Pre-fill form if user has feedback, otherwise clear it
   useEffect(() => {
     if (currentUserFeedback) {
       setComment(currentUserFeedback.comment || '');
       setRatings(currentUserFeedback.ratings || { risk: 0, return: 0, team: 0 });
+    } else {
+      // This will clear the form after feedback is deleted
+      setComment('');
+      setRatings({ risk: 0, return: 0, team: 0 });
     }
   }, [currentUserFeedback]);
 
@@ -93,9 +97,6 @@ export default function DealPage() {
   const confirmDeleteFeedback = () => {
       if (feedbackToDelete) {
           deleteFeedback(deal.id, feedbackToDelete);
-          // Clear form after deleting
-          setComment('');
-          setRatings({ risk: 0, return: 0, team: 0 });
       }
       setShowDeleteFeedbackConfirm(false);
       setFeedbackToDelete(null);
@@ -173,7 +174,7 @@ export default function DealPage() {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
             <div className="glass-panel rounded-lg p-6 max-w-sm mx-auto">
                 <h3 className="text-lg font-semibold text-slate-100">Confirm Deletion</h3>
-                <p className="text-slate-400 mt-2">Are you sure you want to delete your feedback?</p>
+                <p className="text-slate-400 mt-2">Are you sure you want to delete this feedback?</p>
                 <div className="mt-6 flex justify-end gap-4">
                     <button onClick={() => setShowDeleteFeedbackConfirm(false)} className="bg-slate-700/50 text-slate-300 font-semibold px-4 py-2 rounded-lg hover:bg-slate-600/50 transition-colors">
                         Cancel
@@ -270,8 +271,17 @@ export default function DealPage() {
                     </div>
                   )}
                   {teamFeedback.map(fb => (
-                    <div key={fb.id} className="bg-slate-700/50 p-3 rounded-lg">
-                      <span className="text-xs font-semibold text-slate-400">{fb.user_name}</span>
+                    <div key={fb.id} className="bg-slate-700/50 p-3 rounded-lg group">
+                      <div className="flex justify-between items-start">
+                          <span className="text-xs font-semibold text-slate-400">{fb.user_name}</span>
+                          {/* --- UPDATED DELETE BUTTON --- */}
+                          <button 
+                            onClick={() => handleDeleteFeedback(fb.id)} 
+                            className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                              <i className="fas fa-trash-alt fa-sm"></i>
+                          </button>
+                      </div>
                       <p className="text-sm text-slate-300 mt-2">"{fb.comment}"</p>
                        <div className="flex justify-between text-sm mt-3 text-slate-400">
                            <span>Risk: <span className="text-amber-400">{renderStars(fb.ratings.risk)}</span></span>
