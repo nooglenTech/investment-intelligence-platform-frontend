@@ -1,8 +1,15 @@
 // src/components/Accordion.tsx
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, ReactNode } from 'react';
 
-const Accordion = ({ title, children, defaultOpen = false }) => {
+// --- NEW: Define types for component props ---
+type AccordionProps = {
+    title: string;
+    children: ReactNode;
+    defaultOpen?: boolean;
+};
+
+const Accordion = ({ title, children, defaultOpen = false }: AccordionProps) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     const contentRef = useRef<HTMLDivElement>(null);
 

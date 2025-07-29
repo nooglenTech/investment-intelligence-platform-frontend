@@ -5,12 +5,11 @@ import { useAuth } from '@clerk/nextjs';
 
 const DealContext = createContext(undefined);
 
-// --- NEW: Helper function to determine feedback status ---
 const getFeedbackStatus = (deal) => {
     if (deal.status !== 'Complete') {
-        return 'N/A'; // Not applicable until analysis is complete
+        return 'N/A';
     }
-    const totalTeamMembers = 5; // Placeholder
+    const totalTeamMembers = 5;
     const feedbackCount = deal.feedbacks?.length || 0;
 
     if (feedbackCount === totalTeamMembers) return 'Review Complete';
@@ -18,7 +17,6 @@ const getFeedbackStatus = (deal) => {
     return 'Feedback Needed';
 };
 
-// Helper function to map API data to our UI's data structure
 const mapDealFromApi = (dealFromApi, currentUserId) => ({
   ...dealFromApi,
   title: dealFromApi.analysis_data?.company?.name || dealFromApi.file_name,
@@ -26,7 +24,6 @@ const mapDealFromApi = (dealFromApi, currentUserId) => ({
   tags: dealFromApi.analysis_data?.ibis_industries || [dealFromApi.analysis_data?.industry || "N/A"],
   feedback: dealFromApi.feedbacks || [],
   currentUserHasSubmitted: (dealFromApi.feedbacks || []).some(fb => fb.user_id === currentUserId),
-  // --- NEW: Add calculated feedbackStatus to each deal object ---
   feedbackStatus: getFeedbackStatus(dealFromApi),
 });
 
@@ -39,7 +36,7 @@ export function DealProvider({ children }) {
   const hasFetched = useRef(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-  const authedFetch = async (url, options = {}) => {
+  const authedFetch = useCallback(async (url, options = {}) => {
     const token = await getToken();
     const headers = {
       ...options.headers,
@@ -49,7 +46,7 @@ export function DealProvider({ children }) {
         headers['Content-Type'] = 'application/json';
     }
     return fetch(url, { ...options, headers });
-  };
+  }, [getToken]); // --- FIXED: Added getToken dependency ---
 
   const fetchDeals = useCallback(async () => {
     try {
@@ -63,11 +60,11 @@ export function DealProvider({ children }) {
       const dealsWithUIState = data.map(deal => mapDealFromApi(deal, userId));
       setDeals(dealsWithUIState);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       if (isLoading) setIsLoading(false);
     }
-  }, [userId, getToken, isLoading, apiUrl]);
+  }, [userId, isLoading, apiUrl, authedFetch]); // --- FIXED: Added authedFetch dependency ---
 
 
   useEffect(() => {
@@ -121,7 +118,7 @@ export function DealProvider({ children }) {
 
       return { success: true };
     } catch (err) {
-      return { success: false, error: err.message };
+      return { success: false, error: (err as Error).message };
     }
   };
   

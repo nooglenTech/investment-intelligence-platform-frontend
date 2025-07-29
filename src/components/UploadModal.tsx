@@ -13,7 +13,14 @@ export default function UploadModal({ isOpen, onClose }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const router = useRouter();
 
-  const handleUpload = async (file: File) => {
+  const handleClose = useCallback(() => {
+      if(isProcessing) return;
+      setIsProcessing(false);
+      setErrorText("");
+      onClose();
+  }, [isProcessing, onClose]);
+
+  const handleUpload = useCallback(async (file: File) => {
     if (!file) return;
     
     setIsProcessing(true);
@@ -42,10 +49,10 @@ export default function UploadModal({ isOpen, onClose }) {
       router.push('/'); 
 
     } catch (err) {
-      setErrorText(`❌ An error occurred: ${err.message}`);
+      setErrorText(`❌ An error occurred: ${(err as Error).message}`);
       setIsProcessing(false);
     }
-  };
+  }, [addDeal, getToken, handleClose, router]);
   
   const handleFileSelect = useCallback((file: File | null | undefined) => {
       if(file && file.type === "application/pdf") {
@@ -53,7 +60,7 @@ export default function UploadModal({ isOpen, onClose }) {
       } else {
           setErrorText("Please select a valid PDF file.");
       }
-  }, []); // handleUpload is not needed here as it's defined in the same scope and doesn't change
+  }, [handleUpload]);
 
   const onDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -63,7 +70,7 @@ export default function UploadModal({ isOpen, onClose }) {
       handleFileSelect(event.dataTransfer.files[0]);
       event.dataTransfer.clearData();
     }
-  }, [handleFileSelect]); // --- FIXED: Added missing dependency ---
+  }, [handleFileSelect]);
 
   const onDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -76,13 +83,6 @@ export default function UploadModal({ isOpen, onClose }) {
     event.stopPropagation();
     setIsDragOver(false);
   };
-
-  const handleClose = () => {
-      if(isProcessing) return;
-      setIsProcessing(false);
-      setErrorText("");
-      onClose();
-  }
 
   if (!isOpen) return null;
 
