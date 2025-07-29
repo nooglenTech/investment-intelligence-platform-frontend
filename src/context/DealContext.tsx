@@ -10,7 +10,8 @@ const mapDealFromApi = (dealFromApi, currentUserId) => ({
   ...dealFromApi,
   title: dealFromApi.analysis_data?.company?.name || dealFromApi.file_name,
   analysis: dealFromApi.analysis_data,
-  tags: [dealFromApi.analysis_data?.industry || "N/A"],
+  // --- UPDATED: Use the new ibis_industries array for tags ---
+  tags: dealFromApi.analysis_data?.ibis_industries || [dealFromApi.analysis_data?.industry || "N/A"],
   feedback: dealFromApi.feedbacks || [],
   currentUserHasSubmitted: (dealFromApi.feedbacks || []).some(fb => fb.user_id === currentUserId),
 });

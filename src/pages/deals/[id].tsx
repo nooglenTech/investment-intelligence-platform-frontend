@@ -123,6 +123,8 @@ export default function DealPage() {
   const flagged_fields = analysis.flagged_fields || [];
   const low_confidence_flags = analysis.low_confidence_flags || [];
   const confidence_breakdown = analysis.confidence_breakdown || {};
+  // --- NEW: Extract ibis_industries ---
+  const ibis_industries = analysis.ibis_industries || [];
 
   // --- HELPER FUNCTIONS FOR RENDERING ---
 
@@ -252,6 +254,8 @@ export default function DealPage() {
                     <p><strong>Company Name:</strong> {company.name || 'N/A'}</p>
                     <p><strong>Description:</strong> {company.description || 'N/A'}</p>
                     <p><strong>Industry:</strong> {analysis.industry || 'N/A'}</p>
+                    {/* --- NEW: Display IBIS Industries --- */}
+                    <p><strong>IBIS Industries:</strong> {ibis_industries.length > 0 ? ibis_industries.join(', ') : 'N/A'}</p>
                  </div>
             </Accordion>
 
