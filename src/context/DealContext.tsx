@@ -101,17 +101,10 @@ export function DealProvider({ children }) {
         body: JSON.stringify(feedbackData),
       });
       if (!res.ok) throw new Error('Failed to submit feedback.');
-      const savedFeedback = await res.json();
       
-      setDeals(prevDeals =>
-        prevDeals.map(deal => {
-          if (deal.id === dealId) {
-            const updatedFeedback = [...deal.feedback, savedFeedback];
-            return { ...deal, feedback: updatedFeedback, currentUserHasSubmitted: true };
-          }
-          return deal;
-        })
-      );
+      // Re-fetch deals to get the latest state including the new feedback
+      await fetchDeals();
+
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };
@@ -119,13 +112,14 @@ export function DealProvider({ children }) {
   };
   
    const deleteFeedback = async (dealId, feedbackId) => {
-      const originalDeals = [...deals];
-      setDeals(prevDeals => prevDeals.map(d => d.id === dealId ? {...d, feedback: d.feedback.filter(fb => fb.id !== feedbackId)} : d));
       try {
           const res = await authedFetch(`${apiUrl}/api/feedback/${feedbackId}`, { method: 'DELETE' });
           if (!res.ok) throw new Error('Failed to delete feedback.');
+          
+          // Re-fetch deals to update the UI after deletion
+          await fetchDeals();
+
       } catch (err) {
-          setDeals(originalDeals);
           setError("Could not delete feedback.");
       }
   };

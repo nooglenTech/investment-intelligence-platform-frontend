@@ -1,5 +1,3 @@
-// src/pages/index.tsx
-
 import React, { useState, useMemo } from 'react';
 import DealCard from '../components/DealCard';
 import { useDeals } from '../context/DealContext';
@@ -8,8 +6,6 @@ export default function DashboardPage() {
     const { deals, isLoading, error } = useDeals();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-
-    const isAnyDealAnalyzing = useMemo(() => deals.some(deal => deal.status === 'Analyzing'), [deals]);
 
     const filteredDeals = useMemo(() => {
         return deals.filter(deal => {
@@ -45,7 +41,7 @@ export default function DashboardPage() {
                         className="custom-select bg-slate-900/70 border border-slate-600 rounded-lg py-2.5 px-4 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors text-slate-300"
                     >
                         <option value="all">All Statuses</option>
-                        {isAnyDealAnalyzing && <option value="Analyzing">Analyzing</option>}
+                        <option value="Analyzing">Analyzing</option>
                         <option value="Complete">Complete</option>
                         <option value="Failed">Failed</option>
                     </select>
