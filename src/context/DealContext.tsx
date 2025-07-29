@@ -5,15 +5,29 @@ import { useAuth } from '@clerk/nextjs';
 
 const DealContext = createContext(undefined);
 
+// --- NEW: Helper function to determine feedback status ---
+const getFeedbackStatus = (deal) => {
+    if (deal.status !== 'Complete') {
+        return 'N/A'; // Not applicable until analysis is complete
+    }
+    const totalTeamMembers = 5; // Placeholder
+    const feedbackCount = deal.feedbacks?.length || 0;
+
+    if (feedbackCount === totalTeamMembers) return 'Review Complete';
+    if (feedbackCount > 0) return 'In Progress';
+    return 'Feedback Needed';
+};
+
 // Helper function to map API data to our UI's data structure
 const mapDealFromApi = (dealFromApi, currentUserId) => ({
   ...dealFromApi,
   title: dealFromApi.analysis_data?.company?.name || dealFromApi.file_name,
   analysis: dealFromApi.analysis_data,
-  // --- UPDATED: Use the new ibis_industries array for tags ---
   tags: dealFromApi.analysis_data?.ibis_industries || [dealFromApi.analysis_data?.industry || "N/A"],
   feedback: dealFromApi.feedbacks || [],
   currentUserHasSubmitted: (dealFromApi.feedbacks || []).some(fb => fb.user_id === currentUserId),
+  // --- NEW: Add calculated feedbackStatus to each deal object ---
+  feedbackStatus: getFeedbackStatus(dealFromApi),
 });
 
 
@@ -103,7 +117,6 @@ export function DealProvider({ children }) {
       });
       if (!res.ok) throw new Error('Failed to submit feedback.');
       
-      // Re-fetch deals to get the latest state including the new feedback
       await fetchDeals();
 
       return { success: true };
@@ -117,7 +130,6 @@ export function DealProvider({ children }) {
           const res = await authedFetch(`${apiUrl}/api/feedback/${feedbackId}`, { method: 'DELETE' });
           if (!res.ok) throw new Error('Failed to delete feedback.');
           
-          // Re-fetch deals to update the UI after deletion
           await fetchDeals();
 
       } catch (err) {
