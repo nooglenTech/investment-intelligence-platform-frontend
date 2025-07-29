@@ -1,5 +1,17 @@
 import React from 'react';
 
+// --- NEW: Define a specific type for financial metrics ---
+type FinancialMetric = {
+  revenue?: string;
+  year?: string;
+  ebitda?: string;
+  margin?: string;
+  gross_margin?: string;
+  capex?: string;
+  capex_pct_revenue?: string;
+  fcf?: string;
+};
+
 // Define the shape of the data from the AI, including the new 'growth' object
 type AnalysisData = {
   company?: { 
@@ -10,7 +22,8 @@ type AnalysisData = {
     customer_base?: string;
   };
   industry?: string;
-  financials?: { actuals?: any; estimates?: any };
+  // --- UPDATED: Use the new FinancialMetric type ---
+  financials?: { actuals?: FinancialMetric; estimates?: FinancialMetric };
   growth?: {
     historical_revenue_cagr?: string;
     projected_revenue_cagr?: string;

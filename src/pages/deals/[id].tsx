@@ -36,18 +36,15 @@ export default function DealPage() {
   const currentUserFeedback = deal?.feedback.find(fb => fb.user_id === user?.id);
   const teamFeedback = deal?.feedback.filter(fb => fb.user_id !== user?.id) || [];
 
-  // Pre-fill form if user has feedback, otherwise clear it
   useEffect(() => {
     if (currentUserFeedback) {
       setComment(currentUserFeedback.comment || '');
       setRatings(currentUserFeedback.ratings || { risk: 0, return: 0, team: 0 });
     } else {
-      // This will clear the form after feedback is deleted
       setComment('');
       setRatings({ risk: 0, return: 0, team: 0 });
     }
   }, [currentUserFeedback]);
-
 
   const handleRatingChange = (metric, value) => setRatings(prev => ({ ...prev, [metric]: value }));
 
@@ -113,7 +110,6 @@ export default function DealPage() {
     );
   }
 
-  // --- EXTRACTING ALL DATA FROM THE ANALYSIS OBJECT ---
   const analysis = deal.analysis || {};
   const company = analysis.company || {};
   const financials = analysis.financials || {};
@@ -123,12 +119,8 @@ export default function DealPage() {
   const flagged_fields = analysis.flagged_fields || [];
   const low_confidence_flags = analysis.low_confidence_flags || [];
   const confidence_breakdown = analysis.confidence_breakdown || {};
-  // --- NEW: Extract ibis_industries ---
   const ibis_industries = analysis.ibis_industries || [];
 
-  // --- HELPER FUNCTIONS FOR RENDERING ---
-
-  // Renders text that might be a string with newlines or an array
   const renderBulletedText = (text, defaultMessage = 'No data provided.') => {
     if (!text || (Array.isArray(text) && text.length === 0)) {
         return <li>{defaultMessage}</li>;
@@ -144,7 +136,6 @@ export default function DealPage() {
     return <li>Could not parse content.</li>;
   };
 
-  // Renders the nested confidence breakdown object
   const renderConfidenceBreakdown = (breakdown) => {
     if (!breakdown || typeof breakdown !== 'object' || Object.keys(breakdown).length === 0) {
       return <p className="text-slate-400">No breakdown available.</p>;
@@ -169,7 +160,6 @@ export default function DealPage() {
 
   return (
     <div className="fade-in">
-       {/* PDF Viewer Modal */}
        {isPdfModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-slate-800 rounded-lg w-11/12 h-5/6 flex flex-col glass-panel">
@@ -182,12 +172,12 @@ export default function DealPage() {
         </div>
       )}
 
-      {/* Delete Deal Confirmation Modal */}
       {showDeleteDealConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
             <div className="glass-panel rounded-lg p-6 max-w-sm mx-auto">
                 <h3 className="text-lg font-semibold text-slate-100">Confirm Deletion</h3>
-                <p className="text-slate-400 mt-2">Are you sure you want to delete "{deal.title}"? This action cannot be undone.</p>
+                {/* --- FIXED: Escaped quotes --- */}
+                <p className="text-slate-400 mt-2">Are you sure you want to delete &quot;{deal.title}&quot;? This action cannot be undone.</p>
                 <div className="mt-6 flex justify-end gap-4">
                     <button onClick={() => setShowDeleteDealConfirm(false)} className="bg-slate-700/50 text-slate-300 font-semibold px-4 py-2 rounded-lg hover:bg-slate-600/50 transition-colors">
                         Cancel
@@ -200,7 +190,6 @@ export default function DealPage() {
         </div>
       )}
 
-      {/* Delete Feedback Confirmation Modal */}
       {showDeleteFeedbackConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
             <div className="glass-panel rounded-lg p-6 max-w-sm mx-auto">
@@ -254,7 +243,6 @@ export default function DealPage() {
                     <p><strong>Company Name:</strong> {company.name || 'N/A'}</p>
                     <p><strong>Description:</strong> {company.description || 'N/A'}</p>
                     <p><strong>Industry:</strong> {analysis.industry || 'N/A'}</p>
-                    {/* --- NEW: Display IBIS Industries --- */}
                     <p><strong>IBIS Industries:</strong> {ibis_industries.length > 0 ? ibis_industries.join(', ') : 'N/A'}</p>
                  </div>
             </Accordion>
@@ -347,7 +335,6 @@ export default function DealPage() {
 
         <div className="lg:col-span-1">
           <div className="glass-panel rounded-xl p-6 sticky top-8 space-y-8">
-            {/* Team Analysis Section */}
             {(deal.feedback && deal.feedback.length > 0) && (
               <div>
                 <h3 className="text-xl font-semibold text-slate-100 mb-4">Team Analysis</h3>
@@ -360,7 +347,8 @@ export default function DealPage() {
                               <i className="fas fa-trash-alt fa-sm"></i>
                           </button>
                       </div>
-                      <p className="text-sm text-slate-300 mt-2">"{currentUserFeedback.comment}"</p>
+                      {/* --- FIXED: Escaped quotes --- */}
+                      <p className="text-sm text-slate-300 mt-2">&quot;{currentUserFeedback.comment}&quot;</p>
                       <div className="flex justify-between text-sm mt-3 text-slate-400">
                           <span>Risk: <span className="text-amber-400">{renderStars(currentUserFeedback.ratings.risk)}</span></span>
                           <span>Return: <span className="text-amber-400">{renderStars(currentUserFeedback.ratings.return)}</span></span>
@@ -379,7 +367,8 @@ export default function DealPage() {
                               <i className="fas fa-trash-alt fa-sm"></i>
                           </button>
                       </div>
-                      <p className="text-sm text-slate-300 mt-2">"{fb.comment}"</p>
+                      {/* --- FIXED: Escaped quotes --- */}
+                      <p className="text-sm text-slate-300 mt-2">&quot;{fb.comment}&quot;</p>
                        <div className="flex justify-between text-sm mt-3 text-slate-400">
                            <span>Risk: <span className="text-amber-400">{renderStars(fb.ratings.risk)}</span></span>
                            <span>Return: <span className="text-amber-400">{renderStars(fb.ratings.return)}</span></span>
@@ -391,7 +380,6 @@ export default function DealPage() {
               </div>
             )}
 
-            {/* Submit/Update Feedback Section */}
             <div>
               <h3 className="text-xl font-semibold text-slate-100 mb-4">{currentUserFeedback ? 'Update Your Analysis' : 'Submit Your Analysis'}</h3>
               {!currentUserFeedback && <p className="text-sm text-slate-400 mb-6">Your feedback is blind until submitted to reduce bias.</p>}

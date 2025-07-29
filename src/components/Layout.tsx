@@ -24,7 +24,6 @@ export default function Layout({ children }) {
     const router = useRouter();
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-    // Collapse sidebar on deal detail page by default on smaller screens
     useEffect(() => {
         const handleResize = () => {
             if (router.pathname.startsWith('/deals/') && window.innerWidth < 1280) {
@@ -33,17 +32,15 @@ export default function Layout({ children }) {
                 setIsSidebarCollapsed(false);
             }
         };
-        handleResize(); // Check on initial load
+        handleResize();
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, [router.pathname]);
-
 
     const isDashboard = router.pathname === '/';
 
     return (
         <div className="min-h-screen flex">
-            {/* Sidebar Navigation */}
             <aside className={`glass-panel p-4 flex-shrink-0 flex flex-col transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
                 <div className={`flex items-center gap-3 mb-12 p-2 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
                     <svg className="w-8 h-8 text-sky-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -71,15 +68,14 @@ export default function Layout({ children }) {
                     </button>
                 </div>
             </aside>
-
-            {/* Main Content */}
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                 <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 fade-in">
                     <div>
                         {isDashboard && (
                             <>
                                 <h2 className="text-3xl font-bold text-slate-100">Deal Flow Dashboard</h2>
-                                <p className="text-slate-400 mt-1">Welcome back, {user?.firstName || 'Analyst'}. Here's your current deal pipeline.</p>
+                                {/* --- FIXED: Escaped apostrophe --- */}
+                                <p className="text-slate-400 mt-1">Welcome back, {user?.firstName || 'Analyst'}. Here&apos;s your current deal pipeline.</p>
                             </>
                         )}
                     </div>

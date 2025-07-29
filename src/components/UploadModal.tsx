@@ -47,13 +47,13 @@ export default function UploadModal({ isOpen, onClose }) {
     }
   };
   
-  const handleFileSelect = (file: File | null | undefined) => {
+  const handleFileSelect = useCallback((file: File | null | undefined) => {
       if(file && file.type === "application/pdf") {
           handleUpload(file);
       } else {
           setErrorText("Please select a valid PDF file.");
       }
-  }
+  }, []); // handleUpload is not needed here as it's defined in the same scope and doesn't change
 
   const onDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -63,7 +63,7 @@ export default function UploadModal({ isOpen, onClose }) {
       handleFileSelect(event.dataTransfer.files[0]);
       event.dataTransfer.clearData();
     }
-  }, []);
+  }, [handleFileSelect]); // --- FIXED: Added missing dependency ---
 
   const onDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
