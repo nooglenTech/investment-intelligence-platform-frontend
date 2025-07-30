@@ -3,8 +3,6 @@
 import React, { createContext, useState, useContext, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { useAuth } from '@clerk/nextjs';
 
-// --- FIX: Replaced 'any' with specific type definitions to satisfy linting rules ---
-
 // Defines the structure of a single feedback entry
 interface Feedback {
   id: number;
@@ -100,15 +98,23 @@ export function DealProvider({ children }: { children: ReactNode }) {
   const hasFetched = useRef(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+  // --- FIX: Correctly handle headers to avoid TypeScript error ---
+  // The `HeadersInit` type doesn't allow direct property assignment.
+  // The correct approach is to use the `Headers` constructor and its `.set()` method.
   const authedFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     const token = await getToken();
-    const headers: HeadersInit = {
-      ...options.headers,
-      'Authorization': `Bearer ${token}`,
-    };
+    
+    // Create a new Headers object from any headers passed in the options.
+    const headers = new Headers(options.headers);
+    
+    // Set the Authorization token using the standard `.set()` method.
+    headers.set('Authorization', `Bearer ${token}`);
+
+    // Set Content-Type to JSON unless the body is FormData (the browser handles that case).
     if (!(options.body instanceof FormData)) {
-        headers['Content-Type'] = 'application/json';
+        headers.set('Content-Type', 'application/json');
     }
+
     return fetch(url, { ...options, headers });
   }, [getToken]);
 
