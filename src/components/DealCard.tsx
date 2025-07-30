@@ -4,7 +4,32 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useDeals } from '../context/DealContext';
 
-export default function DealCard({ deal, index }) {
+// --- FIX: Added explicit type definitions for props ---
+// This resolves the "implicitly has an 'any' type" error during the build process.
+type Feedback = {
+  id: number;
+  comment: string;
+  ratings: { [key: string]: number };
+  user_id: string;
+  user_name: string;
+};
+
+type Analysis = {
+    summary?: string;
+};
+
+type Deal = {
+    id: number;
+    title: string;
+    status: string;
+    feedback: Feedback[];
+    analysis?: Analysis;
+    tags: string[];
+    user_name: string;
+};
+
+// --- FIX: Applied the types to the component's props ---
+export default function DealCard({ deal, index }: { deal: Deal, index: number }) {
     const { deleteDeal } = useDeals();
     // This state determines whether to show the "Analysis Progress" or "Feedback Progress" UI.
     const [isAnalysisComplete, setIsAnalysisComplete] = useState(deal.status === 'Complete');
@@ -20,9 +45,10 @@ export default function DealCard({ deal, index }) {
         }
     }, [deal.status]);
 
-    const handleDelete = (e) => {
+    const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
+        // Note: window.confirm() can be disruptive. Consider a custom modal for a better UX.
         if (window.confirm(`Are you sure you want to delete "${deal.title}"?`)) {
             deleteDeal(deal.id);
         }
@@ -63,14 +89,14 @@ export default function DealCard({ deal, index }) {
     const statusInfo = getStatusInfo();
     const totalTeamMembers = 5; // Used for the feedback progress display
 
-    const statusClasses = {
+    const statusClasses: { [key: string]: string } = {
         amber: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
         green: 'bg-green-500/20 text-green-400 border-green-500/30',
         sky: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
         red: 'bg-red-500/20 text-red-400 border-red-500/30',
     };
 
-    const progressClasses = {
+    const progressClasses: { [key: string]: string } = {
         amber: 'bg-amber-500',
         green: 'bg-green-500',
         sky: 'bg-sky-500',

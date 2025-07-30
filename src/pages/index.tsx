@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import DealCard from '../components/DealCard';
 import { useDeals } from '../context/DealContext';
-import IndustryFilter from '../components/IndustryFilter'; // New component
+import IndustryFilter from '../components/IndustryFilter';
 
 export default function DashboardPage() {
     const { deals, isLoading, error } = useDeals();
@@ -10,6 +10,8 @@ export default function DashboardPage() {
     const [feedbackStatusFilter, setFeedbackStatusFilter] = useState('all');
 
     const filteredDeals = useMemo(() => {
+        // Ensure deals is an array before filtering
+        if (!Array.isArray(deals)) return [];
         return deals.filter(deal => {
             const nameMatch = deal.title.toLowerCase().includes(searchTerm.toLowerCase());
             
@@ -27,8 +29,10 @@ export default function DashboardPage() {
 
     return (
         <div>
-            {/* Search and Filter Controls */}
-            <div id="filter-controls" className="mb-8 p-4 glass-panel rounded-xl flex flex-col sm:flex-row items-center gap-4 flex-wrap fade-in-up" style={{ animationDelay: '0.1s' }}>
+            {/* --- FIX: Added 'relative' and 'z-10' --- */}
+            {/* This ensures the filter bar and its dropdowns have a higher stacking context */}
+            {/* than the deal cards grid below it, preventing the dropdown from being hidden. */}
+            <div id="filter-controls" className="relative z-10 mb-8 p-4 glass-panel rounded-xl flex flex-col sm:flex-row items-center gap-4 flex-wrap fade-in-up" style={{ animationDelay: '0.1s' }}>
                 <div className="relative w-full sm:w-1/2 lg:w-1/3">
                     <input
                         type="text"
