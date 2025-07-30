@@ -2,33 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useDeals } from '../context/DealContext';
+// --- FIX: Import the unified 'Deal' type from the context ---
+import { useDeals, Deal } from '../context/DealContext';
 
-// --- FIX: Added explicit type definitions for props ---
-// This resolves the "implicitly has an 'any' type" error during the build process.
-type Feedback = {
-  id: number;
-  comment: string;
-  ratings: { [key: string]: number };
-  user_id: string;
-  user_name: string;
-};
+// --- FIX: Removed local type definitions to use the single source of truth from the context ---
 
-type Analysis = {
-    summary?: string;
-};
-
-type Deal = {
-    id: number;
-    title: string;
-    status: string;
-    feedback: Feedback[];
-    analysis?: Analysis;
-    tags: string[];
-    user_name: string;
-};
-
-// --- FIX: Applied the types to the component's props ---
 export default function DealCard({ deal, index }: { deal: Deal, index: number }) {
     const { deleteDeal } = useDeals();
     const [isAnalysisComplete, setIsAnalysisComplete] = useState(deal.status === 'Complete');
@@ -78,7 +56,6 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
     const statusInfo = getStatusInfo();
     const totalTeamMembers = 5;
 
-    // --- FIX: Logic to cap the feedback count and progress bar percentage ---
     const feedbackCount = deal.feedback?.length || 0;
     const displayCount = Math.min(feedbackCount, totalTeamMembers);
     const progressPercentage = Math.min((feedbackCount / totalTeamMembers) * 100, 100);
@@ -125,11 +102,9 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
                         <div>
                             <div className="flex justify-between items-center mb-1 text-sm text-slate-400">
                                 <span>Feedback Progress</span>
-                                {/* --- FIX: Use the capped display count --- */}
                                 <span>{displayCount} / {totalTeamMembers}</span>
                             </div>
                             <div className="w-full bg-slate-700 rounded-full h-2">
-                                {/* --- FIX: Use the capped progress percentage --- */}
                                 <div className="bg-green-500 h-2 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
                             </div>
                         </div>
