@@ -3,23 +3,61 @@
 import React, { createContext, useState, useContext, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { useAuth } from '@clerk/nextjs';
 
-// --- FIX: Define a comprehensive type for the context value ---
-// This tells TypeScript exactly what properties and functions will be available in the context.
-type Deal = any; // Using 'any' for now, but a more specific type is recommended.
+// --- FIX: Replaced 'any' with specific type definitions to satisfy linting rules ---
+
+// Defines the structure of a single feedback entry
+interface Feedback {
+  id: number;
+  comment: string;
+  ratings: { [key: string]: number };
+  user_id: string;
+  user_name: string;
+}
+
+// Defines the structure of the analysis data returned from the API
+interface AnalysisData {
+  company?: {
+    name?: string;
+  };
+  ibis_industries?: string[];
+  industry?: string;
+}
+
+// Defines the structure of a deal object coming from the API
+interface ApiDeal {
+  id: number;
+  status: string;
+  feedbacks: Feedback[];
+  analysis_data?: AnalysisData;
+  file_name: string;
+  user_id: string;
+  user_name: string;
+}
+
+// Defines the structure of a deal object after being processed for the UI
+interface Deal extends ApiDeal {
+  title: string;
+  analysis?: AnalysisData;
+  tags: string[];
+  feedback: Feedback[];
+  currentUserHasSubmitted: boolean;
+  feedbackStatus: string;
+}
+
 type FeedbackData = { comment: string; ratings: { [key: string]: number } };
 
+// Defines the shape of the context's value
 interface DealContextType {
   deals: Deal[];
   isLoading: boolean;
   error: string | null;
-  addDeal: (newDeal: Deal) => void;
+  addDeal: (newDeal: ApiDeal) => void;
   deleteDeal: (dealId: number) => Promise<void>;
   submitFeedback: (dealId: number, feedbackData: FeedbackData) => Promise<{ success: boolean; error?: string }>;
   deleteFeedback: (dealId: number, feedbackId: number) => Promise<void>;
 }
 
-// --- FIX: Provide a default value that matches the context type ---
-// This prevents TypeScript from inferring the context as `undefined`, which caused the "not callable" error.
+// Provides a default value that matches the context type to prevent errors
 const DealContext = createContext<DealContextType>({
   deals: [],
   isLoading: true,
@@ -31,7 +69,7 @@ const DealContext = createContext<DealContextType>({
 });
 
 
-const getFeedbackStatus = (deal: Deal) => {
+const getFeedbackStatus = (deal: ApiDeal) => {
     if (deal.status !== 'Complete') {
         return 'N/A';
     }
@@ -43,13 +81,13 @@ const getFeedbackStatus = (deal: Deal) => {
     return 'Feedback Needed';
 };
 
-const mapDealFromApi = (dealFromApi: any, currentUserId: string | null | undefined) => ({
+const mapDealFromApi = (dealFromApi: ApiDeal, currentUserId: string | null | undefined): Deal => ({
   ...dealFromApi,
   title: dealFromApi.analysis_data?.company?.name || dealFromApi.file_name,
   analysis: dealFromApi.analysis_data,
   tags: dealFromApi.analysis_data?.ibis_industries || [dealFromApi.analysis_data?.industry || "N/A"],
   feedback: dealFromApi.feedbacks || [],
-  currentUserHasSubmitted: (dealFromApi.feedbacks || []).some((fb: any) => fb.user_id === currentUserId),
+  currentUserHasSubmitted: (dealFromApi.feedbacks || []).some((fb: Feedback) => fb.user_id === currentUserId),
   feedbackStatus: getFeedbackStatus(dealFromApi),
 });
 
@@ -64,7 +102,7 @@ export function DealProvider({ children }: { children: ReactNode }) {
 
   const authedFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     const token = await getToken();
-    const headers = {
+    const headers: HeadersInit = {
       ...options.headers,
       'Authorization': `Bearer ${token}`,
     };
@@ -82,11 +120,15 @@ export function DealProvider({ children }: { children: ReactNode }) {
           const errData = await res.json();
           throw new Error(errData.detail || 'Failed to fetch deals.');
       }
-      const data = await res.json();
-      const dealsWithUIState = data.map((deal: any) => mapDealFromApi(deal, userId));
+      const data: ApiDeal[] = await res.json();
+      const dealsWithUIState = data.map((deal) => mapDealFromApi(deal, userId));
       setDeals(dealsWithUIState);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred.');
+      }
     } finally {
       if (isLoading) setIsLoading(false);
     }
@@ -115,7 +157,7 @@ export function DealProvider({ children }: { children: ReactNode }) {
     }
   }, [deals, fetchDeals]);
 
-  const addDeal = (newDealFromApi: any) => {
+  const addDeal = (newDealFromApi: ApiDeal) => {
     const dealWithUIState = mapDealFromApi(newDealFromApi, userId);
     setDeals(prevDeals => [dealWithUIState, ...prevDeals]);
   };
@@ -126,7 +168,7 @@ export function DealProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authedFetch(`${apiUrl}/api/deals/${dealId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete deal on the server.');
-    } catch { // --- FIX: Removed unused 'err' variable ---
+    } catch {
       setDeals(originalDeals);
       setError("Could not delete deal. Please try again.");
     }
@@ -143,8 +185,11 @@ export function DealProvider({ children }: { children: ReactNode }) {
       await fetchDeals();
 
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message };
+    } catch (err) {
+        if (err instanceof Error) {
+            return { success: false, error: err.message };
+        }
+        return { success: false, error: 'An unknown error occurred.' };
     }
   };
   
@@ -155,7 +200,7 @@ export function DealProvider({ children }: { children: ReactNode }) {
           
           await fetchDeals();
 
-      } catch { // --- FIX: Removed unused 'err' variable ---
+      } catch {
           setError("Could not delete feedback.");
       }
   };
