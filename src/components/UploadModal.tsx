@@ -60,7 +60,7 @@ export default function UploadModal({ isOpen, onClose }) {
       } else {
           setErrorText("Please select a valid PDF file.");
       }
-  }, [handleUpload]);
+  }, [handleUpload]); // --- FIXED: Added missing dependency ---
 
   const onDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();

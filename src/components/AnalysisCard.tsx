@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 // --- NEW: Define a specific type for financial metrics ---
 type FinancialMetric = {
@@ -22,7 +22,6 @@ type AnalysisData = {
     customer_base?: string;
   };
   industry?: string;
-  // --- UPDATED: Use the new FinancialMetric type ---
   financials?: { actuals?: FinancialMetric; estimates?: FinancialMetric };
   growth?: {
     historical_revenue_cagr?: string;
@@ -37,8 +36,15 @@ type AnalysisData = {
   confidence_score?: number;
 };
 
+// --- NEW: Define types for the InfoSection props ---
+type InfoSectionProps = {
+    title: string;
+    children: ReactNode;
+    icon: string;
+}
+
 // A reusable component for displaying a section to keep the code clean
-const InfoSection = ({ title, children, icon }) => {
+const InfoSection = ({ title, children, icon }: InfoSectionProps) => {
     // Don't render the section if there's no content
     if (!children || (typeof children === 'string' && (children.trim() === 'N/A' || children.trim() === ''))) return null;
     return (
@@ -93,8 +99,7 @@ export default function AnalysisCard({ data }: { data: AnalysisData }) {
         </div>
       </div>
 
-      {/* *** NEW GROWTH SECTION *** */}
-      <InfoSection title="Growth Analysis" icon="📈">
+      <InfoSection title="Growth Analysis" icon="�">
         <div className="space-y-1">
             <p><span className="font-semibold">Historical Revenue CAGR:</span> {data.growth?.historical_revenue_cagr || 'N/A'}</p>
             <p><span className="font-semibold">Projected Revenue CAGR:</span> {data.growth?.projected_revenue_cagr || 'N/A'}</p>
