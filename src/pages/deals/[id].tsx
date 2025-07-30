@@ -17,11 +17,41 @@ interface Feedback {
   user_name: string;
 }
 
+// --- FIX: Add more specific types for nested analysis objects ---
+interface Company {
+    name?: string;
+    description?: string;
+}
+
+interface FinancialMetric {
+    year?: string;
+    revenue?: string;
+    ebitda?: string;
+    margin?: string;
+    gross_margin?: string;
+    fcf?: string;
+    capex?: string;
+    capex_pct_revenue?: string;
+}
+
+interface Financials {
+    actuals?: FinancialMetric;
+    estimates?: FinancialMetric;
+}
+
+interface Growth {
+    historical_revenue_cagr?: string;
+    projected_revenue_cagr?: string;
+    historical_fcf_cagr?: string;
+    projected_fcf_cagr?: string;
+    growth_commentary?: string;
+}
+
 interface Analysis {
     summary?: string;
-    company?: object;
-    financials?: object;
-    growth?: object;
+    company?: Company;
+    financials?: Financials;
+    growth?: Growth;
     thesis?: string;
     confidence_score?: number;
     flagged_fields?: string[];
@@ -44,10 +74,8 @@ export default function DealPage() {
   const router = useRouter();
   const { id } = router.query;
   const { deals, isLoading, submitFeedback, deleteDeal, deleteFeedback } = useDeals();
-  // --- FIX: Destructure userId instead of user from useAuth ---
   const { userId, getToken } = useAuth();
 
-  // --- FIX: Add explicit type for the deal state ---
   const [deal, setDeal] = useState<Deal | null | undefined>(null);
   const [comment, setComment] = useState('');
   const [ratings, setRatings] = useState({ risk: 0, return: 0, team: 0 });
@@ -58,7 +86,6 @@ export default function DealPage() {
 
   const [showDeleteDealConfirm, setShowDeleteDealConfirm] = useState(false);
   const [showDeleteFeedbackConfirm, setShowDeleteFeedbackConfirm] = useState(false);
-  // --- FIX: Add explicit type for the feedbackToDelete state ---
   const [feedbackToDelete, setFeedbackToDelete] = useState<number | null>(null);
 
   useEffect(() => {
@@ -68,7 +95,6 @@ export default function DealPage() {
     }
   }, [id, deals, isLoading]);
 
-  // --- FIX: Use userId from useAuth for comparison ---
   const currentUserFeedback = deal?.feedback.find(fb => fb.user_id === userId);
   const teamFeedback = deal?.feedback.filter(fb => fb.user_id !== userId) || [];
 
@@ -82,7 +108,6 @@ export default function DealPage() {
     }
   }, [currentUserFeedback]);
 
-  // --- FIX: Add explicit types for handler parameters ---
   const handleRatingChange = (metric: string, value: number) => setRatings(prev => ({ ...prev, [metric]: value }));
 
   const handleSubmitFeedback = async (e: React.FormEvent) => {
@@ -122,7 +147,6 @@ export default function DealPage() {
     setShowDeleteDealConfirm(false);
   }
   
-  // --- FIX: Add explicit type for feedbackId ---
   const handleDeleteFeedback = (feedbackId: number) => {
       setFeedbackToDelete(feedbackId);
       setShowDeleteFeedbackConfirm(true);
@@ -150,10 +174,11 @@ export default function DealPage() {
     );
   }
 
+  // --- FIX: Removed 'as any' casts by using the more specific types defined above ---
   const analysis = deal.analysis || {};
-  const company = (analysis as any).company || {};
-  const financials = (analysis as any).financials || {};
-  const growth = (analysis as any).growth || {};
+  const company = analysis.company || {};
+  const financials = analysis.financials || {};
+  const growth = analysis.growth || {};
   const thesis = analysis.thesis || '';
   const confidence_score = analysis.confidence_score;
   const flagged_fields = analysis.flagged_fields || [];
