@@ -1,35 +1,36 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-// Public pages you want reachable without a session
+// --- FIX: Removed the homepage '/' from the public routes ---
+// This ensures that the dashboard is a protected route and the user session is always available.
 const isPublicRoute = createRouteMatcher([
-  '/',                 // homepage
   '/sign-in(.*)',
   '/sign-up(.*)',
 ]);
 
 export default clerkMiddleware(
-  // ⬇️ make the handler async so we can await auth()
   async (auth, req) => {
-    // Skip auth checks on public routes
+    // Skip auth checks on explicitly public routes
     if (isPublicRoute(req)) return NextResponse.next();
 
-    // auth() is async in v6+
+    // Get the user ID from the session
     const { userId } = await auth();
 
-    // Redirect unauthenticated users to sign‑in
+    // If the user is not signed in, redirect them to the sign-in page
     if (!userId) {
-      return NextResponse.redirect(new URL('/sign-in', req.url));
+      const signInUrl = new URL('/sign-in', req.url);
+      signInUrl.searchParams.set('redirect_url', req.url);
+      return NextResponse.redirect(signInUrl);
     }
 
-    // Everything okay – continue
+    // Allow signed-in users to proceed
     return NextResponse.next();
   },
 );
 
 export const config = {
   matcher: [
-    '/((?!.*\\..*|_next).*)', // all non‑static pages
+    '/((?!.*\\..*|_next).*)', // all non-static pages
     '/',
     '/(api|trpc)(.*)',
   ],
