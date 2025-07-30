@@ -7,7 +7,6 @@ import { useAuth } from '@clerk/nextjs';
 interface Feedback {
   id: number;
   comment: string;
-  // --- FIX: Aligned this type with the one in [id].tsx to resolve build error ---
   ratings: { risk: number; return: number; team: number; };
   user_id: string;
   user_name: string;
@@ -33,8 +32,8 @@ interface ApiDeal {
   user_name: string;
 }
 
-// Defines the structure of a deal object after being processed for the UI
-interface Deal extends ApiDeal {
+// --- FIX: Export the main Deal interface to be used in other components ---
+export interface Deal extends ApiDeal {
   title: string;
   analysis?: AnalysisData;
   tags: string[];
@@ -56,7 +55,6 @@ interface DealContextType {
   deleteFeedback: (dealId: number, feedbackId: number) => Promise<void>;
 }
 
-// Provides a default value that matches the context type to prevent errors
 const DealContext = createContext<DealContextType>({
   deals: [],
   isLoading: true,
