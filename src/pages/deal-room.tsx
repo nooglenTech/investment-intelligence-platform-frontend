@@ -4,11 +4,22 @@ import React from 'react';
 import Link from 'next/link';
 import { useDeals } from '../context/DealContext';
 
+// Define the type for a single deal object to ensure type safety
+// This should match the structure of the deal objects in your context
+type Deal = {
+  id: number;
+  title: string;
+  user_name: string;
+  status: string;
+  s3_url?: string;
+};
+
 export default function DealRoomPage() {
   const { deals, isLoading, error, deleteDeal } = useDeals();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-  const handleDelete = (e, deal) => {
+  // Add explicit types for the event and deal parameters
+  const handleDelete = (e: React.MouseEvent, deal: Deal) => {
     e.stopPropagation();
     e.preventDefault();
     if (window.confirm(`Are you sure you want to delete "${deal.title}"?`)) {
@@ -36,7 +47,8 @@ export default function DealRoomPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {deals.map(deal => (
+                        {/* Add the 'Deal' type to the mapped item */}
+                        {deals.map((deal: Deal) => (
                             <tr key={deal.id} className="border-b border-slate-800 hover:bg-slate-800/50">
                                 <td className="p-4 text-slate-200 font-medium">
                                     <Link href={`/deals/${deal.id}`} className="hover:text-sky-400 transition-colors">
