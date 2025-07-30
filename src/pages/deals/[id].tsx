@@ -12,7 +12,8 @@ import Accordion from '../../components/Accordion';
 interface Feedback {
   id: number;
   comment: string;
-  ratings: { [key: string]: number };
+  // --- FIX: Made ratings type specific to match state and fix build error ---
+  ratings: { risk: number; return: number; team: number; };
   user_id: string;
   user_name: string;
 }
@@ -174,7 +175,6 @@ export default function DealPage() {
     );
   }
 
-  // --- FIX: Removed 'as any' casts by using the more specific types defined above ---
   const analysis = deal.analysis || {};
   const company = analysis.company || {};
   const financials = analysis.financials || {};

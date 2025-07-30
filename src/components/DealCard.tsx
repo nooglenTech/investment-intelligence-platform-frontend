@@ -31,14 +31,11 @@ type Deal = {
 // --- FIX: Applied the types to the component's props ---
 export default function DealCard({ deal, index }: { deal: Deal, index: number }) {
     const { deleteDeal } = useDeals();
-    // This state determines whether to show the "Analysis Progress" or "Feedback Progress" UI.
     const [isAnalysisComplete, setIsAnalysisComplete] = useState(deal.status === 'Complete');
 
-    // This effect can be used to trigger animations when the status changes.
     useEffect(() => {
         if (deal.status === 'Complete') {
-            // A timer can allow an animation to finish before the UI switches to the feedback view.
-            const timer = setTimeout(() => setIsAnalysisComplete(true), 700); // Delay matches animation
+            const timer = setTimeout(() => setIsAnalysisComplete(true), 700); 
             return () => clearTimeout(timer);
         } else {
             setIsAnalysisComplete(false);
@@ -48,24 +45,18 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-        // Note: window.confirm() can be disruptive. Consider a custom modal for a better UX.
         if (window.confirm(`Are you sure you want to delete "${deal.title}"?`)) {
             deleteDeal(deal.id);
         }
     };
 
-    /**
-     * Determines the status text, color, and behavior based on the deal's state.
-     * When analysis is complete, status is driven by feedback count.
-     */
     const getStatusInfo = () => {
-        const totalTeamMembers = 5; // Placeholder for total expected feedback
+        const totalTeamMembers = 5; 
 
-        // If analysis is done, the status badge reflects the feedback stage.
         if (deal.status === 'Complete') {
             const feedbackCount = deal.feedback?.length || 0;
 
-            if (feedbackCount === totalTeamMembers) {
+            if (feedbackCount >= totalTeamMembers) {
                 return { text: 'Review Complete', color: 'green', pulsing: false };
             }
             if (feedbackCount > 0) {
@@ -74,20 +65,24 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
             return { text: 'Feedback Needed', color: 'amber', pulsing: true };
         }
 
-        // Otherwise, show the analysis status.
         switch (deal.status) {
             case 'Analyzing':
                 return { text: 'Analyzing...', color: 'sky', progress: 0, pulsing: true, isAnimating: true };
             case 'Failed':
                  return { text: 'Analysis Failed', color: 'red', progress: 100, pulsing: false, isAnimating: false };
             default:
-                // Fallback for any other status
                 return { text: 'Feedback Required', color: 'amber', progress: 80, pulsing: true, isAnimating: false };
         }
     };
 
     const statusInfo = getStatusInfo();
-    const totalTeamMembers = 5; // Used for the feedback progress display
+    const totalTeamMembers = 5;
+
+    // --- FIX: Logic to cap the feedback count and progress bar percentage ---
+    const feedbackCount = deal.feedback?.length || 0;
+    const displayCount = Math.min(feedbackCount, totalTeamMembers);
+    const progressPercentage = Math.min((feedbackCount / totalTeamMembers) * 100, 100);
+
 
     const statusClasses: { [key: string]: string } = {
         amber: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
@@ -130,10 +125,12 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
                         <div>
                             <div className="flex justify-between items-center mb-1 text-sm text-slate-400">
                                 <span>Feedback Progress</span>
-                                <span>{deal.feedback.length} / {totalTeamMembers}</span>
+                                {/* --- FIX: Use the capped display count --- */}
+                                <span>{displayCount} / {totalTeamMembers}</span>
                             </div>
                             <div className="w-full bg-slate-700 rounded-full h-2">
-                                <div className="bg-green-500 h-2 rounded-full" style={{ width: `${(deal.feedback.length / totalTeamMembers) * 100}%` }}></div>
+                                {/* --- FIX: Use the capped progress percentage --- */}
+                                <div className="bg-green-500 h-2 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
                             </div>
                         </div>
                     ) : (
