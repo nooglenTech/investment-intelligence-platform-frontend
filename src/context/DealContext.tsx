@@ -13,7 +13,9 @@ interface Feedback {
 }
 
 // Defines the structure of the analysis data returned from the API
+// --- FIX: Added the 'summary' property to match the data structure ---
 interface AnalysisData {
+  summary?: string;
   company?: {
     name?: string;
   };
@@ -32,7 +34,7 @@ interface ApiDeal {
   user_name: string;
 }
 
-// --- FIX: Export the main Deal interface to be used in other components ---
+// Export the main Deal interface to be used in other components
 export interface Deal extends ApiDeal {
   title: string;
   analysis?: AnalysisData;
