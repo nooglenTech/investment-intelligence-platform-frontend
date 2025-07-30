@@ -1,33 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import DealCard from '../components/DealCard';
-import { useDeals } from '../context/DealContext';
+// --- FIX: Import the unified 'Deal' type from the context ---
+import { useDeals, Deal } from '../context/DealContext';
 import IndustryFilter from '../components/IndustryFilter';
 
-// --- FIX: Expanded the Deal type to be compatible with the DealCard component ---
-// This resolves the type error during the build process by ensuring the 'deal'
-// object has all the properties expected by the DealCard component, including 'analysis'.
-type Feedback = {
-  id: number;
-  comment: string;
-  ratings: { [key: string]: number };
-  user_id: string;
-  user_name: string;
-};
-
-type Analysis = {
-    summary?: string;
-};
-
-type Deal = {
-    id: number;
-    title: string;
-    status: string;
-    feedback: Feedback[];
-    analysis?: Analysis;
-    tags: string[];
-    user_name: string;
-    feedbackStatus: string;
-};
+// --- FIX: Removed the local type definitions that were causing conflicts ---
 
 export default function DashboardPage() {
     const { deals, isLoading, error } = useDeals();
@@ -37,8 +14,8 @@ export default function DashboardPage() {
 
     const filteredDeals = useMemo(() => {
         if (!Array.isArray(deals)) return [];
-        // The 'deals' from context are cast to our local, more specific 'Deal' type
-        return (deals as Deal[]).filter((deal: Deal) => {
+        // --- FIX: Use the imported Deal type for accurate filtering ---
+        return deals.filter((deal: Deal) => {
             const nameMatch = deal.title.toLowerCase().includes(searchTerm.toLowerCase());
             
             const industryMatch = !industryFilter || 
@@ -88,7 +65,8 @@ export default function DashboardPage() {
             <div id="deal-grid" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredDeals.length > 0 ? (
                     filteredDeals.map((deal, index) => (
-                        <DealCard key={deal.id} deal={deal as any} index={index} />
+                        // --- FIX: Removed the 'as any' cast now that types are aligned ---
+                        <DealCard key={deal.id} deal={deal} index={index} />
                     ))
                 ) : (
                     <p id="no-results" className="text-center text-slate-400 md:col-span-2 xl:col-span-3 mt-8">
