@@ -5,7 +5,13 @@ import { useRouter } from 'next/router';
 import { useDeals } from '../context/DealContext';
 import { useAuth } from '@clerk/nextjs';
 
-export default function UploadModal({ isOpen, onClose }) {
+// --- FIX: Define and apply a type for the component's props ---
+interface UploadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const { addDeal } = useDeals();
   const { getToken } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -60,7 +66,7 @@ export default function UploadModal({ isOpen, onClose }) {
       } else {
           setErrorText("Please select a valid PDF file.");
       }
-  }, [handleUpload]); // --- FIXED: Added missing dependency ---
+  }, [handleUpload]);
 
   const onDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();

@@ -3,10 +3,17 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { IBIS_INDUSTRIES } from '../data/ibis-industries';
 
-export default function IndustryFilter({ value, onChange }) {
+// --- FIX: Define and apply a type for the component's props ---
+// This resolves the "implicitly has an 'any' type" error.
+interface IndustryFilterProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+export default function IndustryFilter({ value, onChange }: IndustryFilterProps) {
   const [inputValue, setInputValue] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const wrapperRef = useRef(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const suggestions = useMemo(() => {
     if (!inputValue) return [];
@@ -17,8 +24,8 @@ export default function IndustryFilter({ value, onChange }) {
 
   // Handle clicks outside of the component to close suggestions
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
       }
     }
@@ -26,13 +33,13 @@ export default function IndustryFilter({ value, onChange }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [wrapperRef]);
   
-  const handleSelect = (industry) => {
+  const handleSelect = (industry: string) => {
     setInputValue(industry);
     onChange(industry);
     setShowSuggestions(false);
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
     onChange(e.target.value); // Allow free text search
     setShowSuggestions(true);

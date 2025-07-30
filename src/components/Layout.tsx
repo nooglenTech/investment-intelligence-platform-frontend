@@ -1,12 +1,20 @@
 // src/components/Layout.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import Link from 'next/link';
 import { UserButton, useUser } from '@clerk/nextjs';
 import UploadModal from './UploadModal';
 import { useRouter } from 'next/router';
 
-const NavLink = ({ href, icon, children, isCollapsed }) => {
+// --- FIX: Define and apply a type for the NavLink component's props ---
+interface NavLinkProps {
+    href: string;
+    icon: ReactNode;
+    children: ReactNode;
+    isCollapsed: boolean;
+}
+
+const NavLink = ({ href, icon, children, isCollapsed }: NavLinkProps) => {
     const router = useRouter();
     const isActive = router.pathname === href;
 
@@ -18,7 +26,8 @@ const NavLink = ({ href, icon, children, isCollapsed }) => {
     );
 };
 
-export default function Layout({ children }) {
+// --- FIX: Define and apply a type for the Layout component's props ---
+export default function Layout({ children }: { children: ReactNode }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { user } = useUser();
     const router = useRouter();
@@ -74,7 +83,6 @@ export default function Layout({ children }) {
                         {isDashboard && (
                             <>
                                 <h2 className="text-3xl font-bold text-slate-100">Deal Flow Dashboard</h2>
-                                {/* --- FIXED: Escaped apostrophe --- */}
                                 <p className="text-slate-400 mt-1">Welcome back, {user?.firstName || 'Analyst'}. Here&apos;s your current deal pipeline.</p>
                             </>
                         )}

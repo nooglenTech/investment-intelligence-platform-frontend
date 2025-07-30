@@ -1,6 +1,16 @@
+// src/components/StarRating.tsx
+
 import React, { useState } from 'react';
 
-export default function StarRating({ label, metric, value, onChange }) {
+// --- FIX: Define and apply a type for the component's props ---
+interface StarRatingProps {
+  label: string;
+  metric: string;
+  value: number;
+  onChange: (metric: string, value: number) => void;
+}
+
+export default function StarRating({ label, metric, value, onChange }: StarRatingProps) {
   const [hoverValue, setHoverValue] = useState(0);
 
   return (
