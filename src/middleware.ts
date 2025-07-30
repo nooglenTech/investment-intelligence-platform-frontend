@@ -1,30 +1,36 @@
-// src/middleware.ts
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
-// ✅ Define which routes are public (no login needed)
+// Public pages you want reachable without a session
 const isPublicRoute = createRouteMatcher([
-  '/',                      // homepage
-  '/sign-in(.*)', 
-  '/sign-up(.*)', 
-  '/api/webhook(.*)',       // allow backend-only routes if needed
+  '/',                 // homepage
+  '/sign-in(.*)',
+  '/sign-up(.*)',
 ]);
 
-// ✅ Use Clerk's v5 middleware handler
-export default clerkMiddleware((auth, req) => {
-  // if it's a public route, skip auth entirely
-  if (isPublicRoute(req)) return;
+export default clerkMiddleware(
+  // ⬇️ make the handler async so we can await auth()
+  async (auth, req) => {
+    // Skip auth checks on public routes
+    if (isPublicRoute(req)) return NextResponse.next();
 
-  const { userId } = auth();
-  // if it's a protected route and user is not logged in, Clerk will auto-redirect
-  if (!userId) {
-    // Optionally do custom redirect here, but usually not needed
-  }
-});
+    // auth() is async in v6+
+    const { userId } = await auth();
+
+    // Redirect unauthenticated users to sign‑in
+    if (!userId) {
+      return NextResponse.redirect(new URL('/sign-in', req.url));
+    }
+
+    // Everything okay – continue
+    return NextResponse.next();
+  },
+);
 
 export const config = {
   matcher: [
-    '/((?!.*\\..*|_next).*)', // match all routes except static files
+    '/((?!.*\\..*|_next).*)', // all non‑static pages
     '/',
-    '/(api|trpc)(.*)',        // optionally match backend routes
+    '/(api|trpc)(.*)',
   ],
 };
