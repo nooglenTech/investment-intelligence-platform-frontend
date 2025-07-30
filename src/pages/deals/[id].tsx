@@ -8,13 +8,47 @@ import { useDeals } from '../../context/DealContext';
 import StarRating from '../../components/StarRating';
 import Accordion from '../../components/Accordion';
 
+// --- NEW: Define types for better type safety ---
+interface Feedback {
+  id: number;
+  comment: string;
+  ratings: { [key: string]: number };
+  user_id: string;
+  user_name: string;
+}
+
+interface Analysis {
+    summary?: string;
+    company?: object;
+    financials?: object;
+    growth?: object;
+    thesis?: string;
+    confidence_score?: number;
+    flagged_fields?: string[];
+    low_confidence_flags?: string[];
+    confidence_breakdown?: object;
+    ibis_industries?: string[];
+    industry?: string;
+    red_flags?: string;
+}
+
+interface Deal {
+    id: number;
+    title: string;
+    feedback: Feedback[];
+    analysis?: Analysis;
+}
+
+
 export default function DealPage() {
   const router = useRouter();
   const { id } = router.query;
   const { deals, isLoading, submitFeedback, deleteDeal, deleteFeedback } = useDeals();
-  const { user, getToken } = useAuth();
+  // --- FIX: Destructure userId instead of user from useAuth ---
+  const { userId, getToken } = useAuth();
 
-  const [deal, setDeal] = useState(null);
+  // --- FIX: Add explicit type for the deal state ---
+  const [deal, setDeal] = useState<Deal | null | undefined>(null);
   const [comment, setComment] = useState('');
   const [ratings, setRatings] = useState({ risk: 0, return: 0, team: 0 });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,7 +58,8 @@ export default function DealPage() {
 
   const [showDeleteDealConfirm, setShowDeleteDealConfirm] = useState(false);
   const [showDeleteFeedbackConfirm, setShowDeleteFeedbackConfirm] = useState(false);
-  const [feedbackToDelete, setFeedbackToDelete] = useState(null);
+  // --- FIX: Add explicit type for the feedbackToDelete state ---
+  const [feedbackToDelete, setFeedbackToDelete] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isLoading && deals.length > 0 && id) {
@@ -33,8 +68,9 @@ export default function DealPage() {
     }
   }, [id, deals, isLoading]);
 
-  const currentUserFeedback = deal?.feedback.find(fb => fb.user_id === user?.id);
-  const teamFeedback = deal?.feedback.filter(fb => fb.user_id !== user?.id) || [];
+  // --- FIX: Use userId from useAuth for comparison ---
+  const currentUserFeedback = deal?.feedback.find(fb => fb.user_id === userId);
+  const teamFeedback = deal?.feedback.filter(fb => fb.user_id !== userId) || [];
 
   useEffect(() => {
     if (currentUserFeedback) {
@@ -46,9 +82,10 @@ export default function DealPage() {
     }
   }, [currentUserFeedback]);
 
-  const handleRatingChange = (metric, value) => setRatings(prev => ({ ...prev, [metric]: value }));
+  // --- FIX: Add explicit types for handler parameters ---
+  const handleRatingChange = (metric: string, value: number) => setRatings(prev => ({ ...prev, [metric]: value }));
 
-  const handleSubmitFeedback = async (e) => {
+  const handleSubmitFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!deal) return;
     setIsSubmitting(true);
@@ -78,18 +115,21 @@ export default function DealPage() {
   const handleDeleteDeal = () => setShowDeleteDealConfirm(true);
 
   const confirmDeleteDeal = () => {
-    deleteDeal(deal.id);
-    router.push('/');
+    if (deal) {
+        deleteDeal(deal.id);
+        router.push('/');
+    }
     setShowDeleteDealConfirm(false);
   }
   
-  const handleDeleteFeedback = (feedbackId) => {
+  // --- FIX: Add explicit type for feedbackId ---
+  const handleDeleteFeedback = (feedbackId: number) => {
       setFeedbackToDelete(feedbackId);
       setShowDeleteFeedbackConfirm(true);
   }
 
   const confirmDeleteFeedback = () => {
-      if (feedbackToDelete) {
+      if (deal && feedbackToDelete) {
           deleteFeedback(deal.id, feedbackToDelete);
       }
       setShowDeleteFeedbackConfirm(false);
@@ -111,9 +151,9 @@ export default function DealPage() {
   }
 
   const analysis = deal.analysis || {};
-  const company = analysis.company || {};
-  const financials = analysis.financials || {};
-  const growth = analysis.growth || {};
+  const company = (analysis as any).company || {};
+  const financials = (analysis as any).financials || {};
+  const growth = (analysis as any).growth || {};
   const thesis = analysis.thesis || '';
   const confidence_score = analysis.confidence_score;
   const flagged_fields = analysis.flagged_fields || [];
@@ -121,7 +161,7 @@ export default function DealPage() {
   const confidence_breakdown = analysis.confidence_breakdown || {};
   const ibis_industries = analysis.ibis_industries || [];
 
-  const renderBulletedText = (text, defaultMessage = 'No data provided.') => {
+  const renderBulletedText = (text: string | string[] | undefined, defaultMessage = 'No data provided.') => {
     if (!text || (Array.isArray(text) && text.length === 0)) {
         return <li>{defaultMessage}</li>;
     }
@@ -136,7 +176,7 @@ export default function DealPage() {
     return <li>Could not parse content.</li>;
   };
 
-  const renderConfidenceBreakdown = (breakdown) => {
+  const renderConfidenceBreakdown = (breakdown: object) => {
     if (!breakdown || typeof breakdown !== 'object' || Object.keys(breakdown).length === 0) {
       return <p className="text-slate-400">No breakdown available.</p>;
     }
@@ -156,7 +196,7 @@ export default function DealPage() {
     );
   };
   
-  const renderStars = (score) => '★'.repeat(score || 0) + '☆'.repeat(5 - (score || 0));
+  const renderStars = (score: number) => '★'.repeat(score || 0) + '☆'.repeat(5 - (score || 0));
 
   return (
     <div className="fade-in">
@@ -176,7 +216,6 @@ export default function DealPage() {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
             <div className="glass-panel rounded-lg p-6 max-w-sm mx-auto">
                 <h3 className="text-lg font-semibold text-slate-100">Confirm Deletion</h3>
-                {/* --- FIXED: Escaped quotes --- */}
                 <p className="text-slate-400 mt-2">Are you sure you want to delete &quot;{deal.title}&quot;? This action cannot be undone.</p>
                 <div className="mt-6 flex justify-end gap-4">
                     <button onClick={() => setShowDeleteDealConfirm(false)} className="bg-slate-700/50 text-slate-300 font-semibold px-4 py-2 rounded-lg hover:bg-slate-600/50 transition-colors">
@@ -347,7 +386,6 @@ export default function DealPage() {
                               <i className="fas fa-trash-alt fa-sm"></i>
                           </button>
                       </div>
-                      {/* --- FIXED: Escaped quotes --- */}
                       <p className="text-sm text-slate-300 mt-2">&quot;{currentUserFeedback.comment}&quot;</p>
                       <div className="flex justify-between text-sm mt-3 text-slate-400">
                           <span>Risk: <span className="text-amber-400">{renderStars(currentUserFeedback.ratings.risk)}</span></span>
@@ -367,7 +405,6 @@ export default function DealPage() {
                               <i className="fas fa-trash-alt fa-sm"></i>
                           </button>
                       </div>
-                      {/* --- FIXED: Escaped quotes --- */}
                       <p className="text-sm text-slate-300 mt-2">&quot;{fb.comment}&quot;</p>
                        <div className="flex justify-between text-sm mt-3 text-slate-400">
                            <span>Risk: <span className="text-amber-400">{renderStars(fb.ratings.risk)}</span></span>

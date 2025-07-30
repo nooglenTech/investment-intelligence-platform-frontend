@@ -3,6 +3,14 @@ import DealCard from '../components/DealCard';
 import { useDeals } from '../context/DealContext';
 import IndustryFilter from '../components/IndustryFilter';
 
+// Define the type for a single deal object to ensure type safety
+type Deal = {
+    id: number;
+    title: string;
+    tags: string[];
+    feedbackStatus: string;
+};
+
 export default function DashboardPage() {
     const { deals, isLoading, error } = useDeals();
     const [searchTerm, setSearchTerm] = useState('');
@@ -10,9 +18,8 @@ export default function DashboardPage() {
     const [feedbackStatusFilter, setFeedbackStatusFilter] = useState('all');
 
     const filteredDeals = useMemo(() => {
-        // Ensure deals is an array before filtering
         if (!Array.isArray(deals)) return [];
-        return deals.filter(deal => {
+        return deals.filter((deal: Deal) => {
             const nameMatch = deal.title.toLowerCase().includes(searchTerm.toLowerCase());
             
             const industryMatch = !industryFilter || 
@@ -29,9 +36,6 @@ export default function DashboardPage() {
 
     return (
         <div>
-            {/* --- FIX: Added 'relative' and 'z-10' --- */}
-            {/* This ensures the filter bar and its dropdowns have a higher stacking context */}
-            {/* than the deal cards grid below it, preventing the dropdown from being hidden. */}
             <div id="filter-controls" className="relative z-10 mb-8 p-4 glass-panel rounded-xl flex flex-col sm:flex-row items-center gap-4 flex-wrap fade-in-up" style={{ animationDelay: '0.1s' }}>
                 <div className="relative w-full sm:w-1/2 lg:w-1/3">
                     <input
@@ -39,7 +43,8 @@ export default function DashboardPage() {
                         id="search-input"
                         placeholder="Search by deal name..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        // --- FIX: Add explicit event type ---
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                         className="w-full bg-slate-900/70 border border-slate-600 rounded-lg py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
                     />
                     <svg className="w-5 h-5 text-slate-400 absolute top-1/2 left-3 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -51,7 +56,8 @@ export default function DashboardPage() {
                     <select
                         id="status-filter"
                         value={feedbackStatusFilter}
-                        onChange={(e) => setFeedbackStatusFilter(e.target.value)}
+                        // --- FIX: Add explicit event type ---
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFeedbackStatusFilter(e.target.value)}
                         className="custom-select w-full bg-slate-900/70 border border-slate-600 rounded-lg py-2.5 px-4 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors text-slate-300"
                     >
                         <option value="all">All Feedback Stages</option>
@@ -62,7 +68,6 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Deal Cards Grid */}
             <div id="deal-grid" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredDeals.length > 0 ? (
                     filteredDeals.map((deal, index) => (
