@@ -8,17 +8,14 @@ import { useDeals } from '../../context/DealContext';
 import StarRating from '../../components/StarRating';
 import Accordion from '../../components/Accordion';
 
-// --- NEW: Define types for better type safety ---
 interface Feedback {
   id: number;
   comment: string;
-  // --- FIX: Made ratings type specific to match state and fix build error ---
   ratings: { risk: number; return: number; team: number; };
   user_id: string;
   user_name: string;
 }
 
-// --- FIX: Add more specific types for nested analysis objects ---
 interface Company {
     name?: string;
     description?: string;
@@ -92,22 +89,9 @@ export default function DealPage() {
   useEffect(() => {
     if (!isLoading && deals.length > 0 && id) {
       const foundDeal = deals.find(d => d.id === Number(id));
-      setDeal(foundDeal);
+      setDeal(foundDeal as any);
     }
   }, [id, deals, isLoading]);
-
-  const currentUserFeedback = deal?.feedback.find(fb => fb.user_id === userId);
-  const teamFeedback = deal?.feedback.filter(fb => fb.user_id !== userId) || [];
-
-  useEffect(() => {
-    if (currentUserFeedback) {
-      setComment(currentUserFeedback.comment || '');
-      setRatings(currentUserFeedback.ratings || { risk: 0, return: 0, team: 0 });
-    } else {
-      setComment('');
-      setRatings({ risk: 0, return: 0, team: 0 });
-    }
-  }, [currentUserFeedback]);
 
   const handleRatingChange = (metric: string, value: number) => setRatings(prev => ({ ...prev, [metric]: value }));
 
@@ -117,6 +101,9 @@ export default function DealPage() {
     setIsSubmitting(true);
     const feedbackData = { comment, ratings };
     await submitFeedback(deal.id, feedbackData);
+    // --- FIX: Reset form after submission for a new entry ---
+    setComment('');
+    setRatings({ risk: 0, return: 0, team: 0 });
     setIsSubmitting(false);
   };
   
@@ -403,48 +390,34 @@ export default function DealPage() {
               <div>
                 <h3 className="text-xl font-semibold text-slate-100 mb-4">Team Analysis</h3>
                 <div className="space-y-4">
-                  {currentUserFeedback && (
-                    <div className="bg-sky-500/10 border border-sky-500/30 p-3 rounded-lg group">
-                      <div className="flex justify-between items-start">
-                          <span className="text-xs font-semibold text-sky-300">Your Feedback</span>
-                          <button onClick={() => handleDeleteFeedback(currentUserFeedback.id)} className="text-slate-500 hover:text-red-400 opacity-50 hover:opacity-100 transition-opacity">
-                              <i className="fas fa-trash-alt fa-sm"></i>
-                          </button>
+                  {/* --- FIX: Map all feedback and highlight the current user's --- */}
+                  {deal.feedback.map(fb => {
+                    const isCurrentUser = fb.user_id === userId;
+                    return (
+                      <div key={fb.id} className={`${isCurrentUser ? 'bg-sky-500/10 border border-sky-500/30' : 'bg-slate-700/50'} p-3 rounded-lg group`}>
+                        <div className="flex justify-between items-start">
+                            <span className={`text-xs font-semibold ${isCurrentUser ? 'text-sky-300' : 'text-slate-400'}`}>
+                              {isCurrentUser ? 'Your Feedback' : fb.user_name}
+                            </span>
+                            <button onClick={() => handleDeleteFeedback(fb.id)} className="text-slate-500 hover:text-red-400 opacity-50 hover:opacity-100 transition-opacity">
+                                <i className="fas fa-trash-alt fa-sm"></i>
+                            </button>
+                        </div>
+                        <p className="text-sm text-slate-300 mt-2">&quot;{fb.comment}&quot;</p>
+                        <div className="flex justify-between text-sm mt-3 text-slate-400">
+                            <span>Risk: <span className="text-amber-400">{renderStars(fb.ratings.risk)}</span></span>
+                            <span>Return: <span className="text-amber-400">{renderStars(fb.ratings.return)}</span></span>
+                            <span>Team: <span className="text-amber-400">{renderStars(fb.ratings.team)}</span></span>
+                        </div>
                       </div>
-                      <p className="text-sm text-slate-300 mt-2">&quot;{currentUserFeedback.comment}&quot;</p>
-                      <div className="flex justify-between text-sm mt-3 text-slate-400">
-                          <span>Risk: <span className="text-amber-400">{renderStars(currentUserFeedback.ratings.risk)}</span></span>
-                          <span>Return: <span className="text-amber-400">{renderStars(currentUserFeedback.ratings.return)}</span></span>
-                          <span>Team: <span className="text-amber-400">{renderStars(currentUserFeedback.ratings.team)}</span></span>
-                      </div>
-                    </div>
-                  )}
-                  {teamFeedback.map(fb => (
-                    <div key={fb.id} className="bg-slate-700/50 p-3 rounded-lg group">
-                      <div className="flex justify-between items-start">
-                          <span className="text-xs font-semibold text-slate-400">{fb.user_name}</span>
-                          <button 
-                            onClick={() => handleDeleteFeedback(fb.id)} 
-                            className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                              <i className="fas fa-trash-alt fa-sm"></i>
-                          </button>
-                      </div>
-                      <p className="text-sm text-slate-300 mt-2">&quot;{fb.comment}&quot;</p>
-                       <div className="flex justify-between text-sm mt-3 text-slate-400">
-                           <span>Risk: <span className="text-amber-400">{renderStars(fb.ratings.risk)}</span></span>
-                           <span>Return: <span className="text-amber-400">{renderStars(fb.ratings.return)}</span></span>
-                           <span>Team: <span className="text-amber-400">{renderStars(fb.ratings.team)}</span></span>
-                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             <div>
-              <h3 className="text-xl font-semibold text-slate-100 mb-4">{currentUserFeedback ? 'Update Your Analysis' : 'Submit Your Analysis'}</h3>
-              {!currentUserFeedback && <p className="text-sm text-slate-400 mb-6">Your feedback is blind until submitted to reduce bias.</p>}
+              <h3 className="text-xl font-semibold text-slate-100 mb-4">Submit Your Analysis</h3>
               <form onSubmit={handleSubmitFeedback}>
                 <div className="space-y-6">
                   <div>
@@ -459,8 +432,9 @@ export default function DealPage() {
                           <StarRating label="Team Strength" metric="team" value={ratings.team} onChange={handleRatingChange} />
                       </div>
                   </div>
+                  {/* --- FIX: Changed button text to be static --- */}
                   <button type="submit" disabled={isSubmitting} className="w-full bg-sky-500 text-white font-semibold py-3 rounded-lg hover:bg-sky-600 transition-all duration-300 glow-on-hover disabled:opacity-50 disabled:cursor-not-allowed">
-                    {isSubmitting ? 'Submitting...' : (currentUserFeedback ? 'Update Feedback' : 'Submit & View Team Feedback')}
+                    {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
                   </button>
                 </div>
               </form>
