@@ -89,7 +89,7 @@ export default function DealPage() {
   useEffect(() => {
     if (!isLoading && deals.length > 0 && id) {
       const foundDeal = deals.find(d => d.id === Number(id));
-      setDeal(foundDeal as any);
+      setDeal(foundDeal);
     }
   }, [id, deals, isLoading]);
 
