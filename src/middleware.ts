@@ -4,7 +4,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 const isPublicRoute = createRouteMatcher([
-  '/', // Add this line to make the homepage public again
+  '', // Add this line to make the homepage public again
   '/sign-in(.*)',
   '/sign-up(.*)',
 ]);
