@@ -47,55 +47,53 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
 
     const analysis = deal.analysis || {};
     const financials = analysis.financials || {};
+    const growth = analysis.growth || {};
+    const primaryIndustry = deal.tags && deal.tags.length > 0 ? deal.tags[0] : 'N/A';
 
     return (
-        <div className="deal-card p-5 rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-1 fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
-            <div className="flex items-start justify-between">
-                <div>
-                    <Link href={`/deals/${deal.id}`} className="font-semibold text-slate-900 dark:text-white text-xl hover:underline">
-                        {deal.title}
-                    </Link>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Uploaded by <span className="font-medium text-slate-600 dark:text-slate-300">{deal.user_name}</span></p>
-                </div>
-                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusClasses[statusInfo.color]}`}>
-                    {statusInfo.text}
-                </span>
-            </div>
-
-            <div className="mt-4">
-                <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2"><span className="font-semibold text-slate-700 dark:text-slate-200">AI Summary:</span> {analysis.summary || 'Analysis is processing...'}</p>
-            </div>
-            
-            <div className="mt-4">
-                <button 
-                    onClick={() => setShowMetrics(!showMetrics)} 
-                    className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center"
-                >
-                    <span>{showMetrics ? 'Hide Key Metrics' : 'Show Key Metrics'}</span>
-                    <svg className={`h-4 w-4 ml-1 transition-transform ${showMetrics ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                </button>
-                <div className={`metrics-section grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 ${showMetrics ? 'open' : ''}`}>
-                    <KeyMetric label="Revenue (Actual)" value={financials.actuals?.revenue} />
-                    <KeyMetric label="EBITDA (Actual)" value={financials.actuals?.ebitda} />
-                    <KeyMetric label="Revenue (Est.)" value={financials.estimates?.revenue} />
-                    <KeyMetric label="EBITDA (Est.)" value={financials.estimates?.ebitda} />
-                </div>
-            </div>
-
-            <div className="mt-5 pt-5 border-t border-gray-200 dark:border-slate-700">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center -space-x-2">
-                        {deal.feedback?.slice(0, 4).map(fb => (
-                             <div key={fb.id} className="h-7 w-7 rounded-full ring-2 ring-white dark:ring-slate-800 bg-gray-200 dark:bg-slate-600 flex items-center justify-center text-xs font-bold" title={fb.user_name}>
-                                {fb.user_name.charAt(0)}
-                             </div>
-                        ))}
-                        {deal.feedback?.length > 4 && (
-                            <div className="h-7 w-7 rounded-full ring-2 ring-white dark:ring-slate-800 bg-gray-300 dark:bg-slate-500 flex items-center justify-center text-xs font-bold">
-                                +{deal.feedback.length - 4}
-                            </div>
-                        )}
+        // FIX: Use flexbox to structure the card for a fixed footer
+        <div className="deal-card flex flex-col p-5 rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-1 fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
+            <div>
+                <div className="flex items-start justify-between">
+                    {/* FIX: Wrap title and industry tag for better spacing */}
+                    <div className="flex items-center flex-wrap">
+                        <Link href={`/deals/${deal.id}`} className="font-semibold text-slate-900 dark:text-white text-xl hover:underline">
+                            {deal.title}
+                        </Link>
+                        {/* FIX: Added margin and new colors to industry tag */}
+                        <span className="text-xs text-sky-800 dark:text-sky-300 font-semibold bg-sky-100 dark:bg-sky-500/20 px-2 py-0.5 rounded-full ml-3">
+                            {primaryIndustry}
+                        </span>
                     </div>
+                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusClasses[statusInfo.color]} flex-shrink-0`}>
+                        {statusInfo.text}
+                    </span>
+                </div>
+
+                <div className="mt-4">
+                    <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2"><span className="font-semibold text-slate-700 dark:text-slate-200">AI Summary:</span> {analysis.summary || 'Analysis is processing...'}</p>
+                </div>
+            
+                <div className="mt-4">
+                    <button 
+                        onClick={() => setShowMetrics(!showMetrics)} 
+                        className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center"
+                    >
+                        <span>{showMetrics ? 'Hide Key Metrics' : 'Show Key Metrics'}</span>
+                        <svg className={`h-4 w-4 ml-1 transition-transform ${showMetrics ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                    <div className={`metrics-section grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 ${showMetrics ? 'open' : ''}`}>
+                        <KeyMetric label={`Revenue (${financials.actuals?.year || 'N/A'})`} value={financials.actuals?.revenue} />
+                        <KeyMetric label={`EBITDA (${financials.actuals?.year || 'N/A'})`} value={financials.actuals?.ebitda} />
+                        <KeyMetric label="EBITDA Margin" value={financials.actuals?.margin} />
+                        <KeyMetric label="Hist. Revenue CAGR" value={growth?.historical_revenue_cagr} />
+                    </div>
+                </div>
+            </div>
+
+            {/* FIX: Added mt-auto to push this footer to the bottom of the card */}
+            <div className="mt-auto pt-5 border-t border-gray-200 dark:border-slate-700">
+                <div className="flex justify-end items-center">
                     <div className="flex items-center gap-2">
                          <Link href={`/deals/${deal.id}`} className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
                             View Deal

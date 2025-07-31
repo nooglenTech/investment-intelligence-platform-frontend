@@ -11,32 +11,37 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState<Theme>('light');
+  // Initialize state to null to prevent flash of wrong theme during server-side rendering
+  const [theme, setTheme] = useState<Theme | null>(null);
 
+  // On mount, read the theme from localStorage or system preference
   useEffect(() => {
     const storedTheme = localStorage.getItem('theme') as Theme | null;
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    if (storedTheme) {
-      setTheme(storedTheme);
-    } else if (prefersDark) {
-      setTheme('dark');
-    }
+    setTheme(storedTheme || (prefersDark ? 'dark' : 'light'));
   }, []);
 
+  // Whenever the theme state changes, update the DOM and localStorage
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.body.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark');
+    if (theme) {
+      const root = window.document.documentElement;
+      if (theme === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+      localStorage.setItem('theme', theme);
     }
-    localStorage.setItem('theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
     setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
   };
+
+  // Render children only after the theme has been determined to avoid FOUC
+  if (!theme) {
+    return null;
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>

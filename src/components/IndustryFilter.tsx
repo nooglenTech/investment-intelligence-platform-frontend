@@ -3,8 +3,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { IBIS_INDUSTRIES } from '../data/ibis-industries';
 
-// --- FIX: Define and apply a type for the component's props ---
-// This resolves the "implicitly has an 'any' type" error.
 interface IndustryFilterProps {
   value: string;
   onChange: (value: string) => void;
@@ -22,7 +20,6 @@ export default function IndustryFilter({ value, onChange }: IndustryFilterProps)
     ).slice(0, 10); // Limit suggestions
   }, [inputValue]);
 
-  // Handle clicks outside of the component to close suggestions
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -53,7 +50,7 @@ export default function IndustryFilter({ value, onChange }: IndustryFilterProps)
         value={inputValue}
         onChange={handleChange}
         onFocus={() => setShowSuggestions(true)}
-        className="w-full bg-slate-900/70 border border-slate-600 rounded-lg py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
+        className="w-full bg-gray-100 dark:bg-slate-700 border-gray-300 dark:border-slate-600 rounded-lg py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors text-slate-800 dark:text-slate-300"
       />
        <svg className="w-5 h-5 text-slate-400 absolute top-1/2 left-3 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />

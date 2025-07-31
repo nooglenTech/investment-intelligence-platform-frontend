@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useEffect, ReactNode } from 'react';
 
-// --- NEW: Define types for component props ---
 type AccordionProps = {
     title: string;
     children: ReactNode;
@@ -26,7 +25,7 @@ const Accordion = ({ title, children, defaultOpen = false }: AccordionProps) => 
                 className="flex justify-between items-center w-full text-left"
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <h3 className="text-xl font-semibold text-slate-100">{title}</h3>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white">{title}</h3>
                 <svg
                     className={`w-6 h-6 transform transition-transform text-slate-400 ${isOpen ? 'rotate-180' : ''}`}
                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
