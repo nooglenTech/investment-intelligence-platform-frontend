@@ -68,8 +68,7 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
                 </div>
 
                 <div className="mt-4">
-                    {/* FIX: Removed line-clamp-2 to show the full summary */}
-                    <p className="text-sm text-slate-600 dark:text-slate-300"><span className="font-semibold text-slate-700 dark:text-slate-200">AI Summary:</span> {analysis.summary || 'Analysis is processing...'}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2"><span className="font-semibold text-slate-700 dark:text-slate-200">AI Summary:</span> {analysis.summary || 'Analysis is processing...'}</p>
                 </div>
             
                 <div className="mt-4">
