@@ -51,16 +51,13 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
     const primaryIndustry = deal.tags && deal.tags.length > 0 ? deal.tags[0] : 'N/A';
 
     return (
-        // FIX: Use flexbox to structure the card for a fixed footer
         <div className="deal-card flex flex-col p-5 rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-1 fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
             <div>
                 <div className="flex items-start justify-between">
-                    {/* FIX: Wrap title and industry tag for better spacing */}
                     <div className="flex items-center flex-wrap">
                         <Link href={`/deals/${deal.id}`} className="font-semibold text-slate-900 dark:text-white text-xl hover:underline">
                             {deal.title}
                         </Link>
-                        {/* FIX: Added margin and new colors to industry tag */}
                         <span className="text-xs text-sky-800 dark:text-sky-300 font-semibold bg-sky-100 dark:bg-sky-500/20 px-2 py-0.5 rounded-full ml-3">
                             {primaryIndustry}
                         </span>
@@ -71,7 +68,8 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
                 </div>
 
                 <div className="mt-4">
-                    <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2"><span className="font-semibold text-slate-700 dark:text-slate-200">AI Summary:</span> {analysis.summary || 'Analysis is processing...'}</p>
+                    {/* FIX: Removed line-clamp-2 to show the full summary */}
+                    <p className="text-sm text-slate-600 dark:text-slate-300"><span className="font-semibold text-slate-700 dark:text-slate-200">AI Summary:</span> {analysis.summary || 'Analysis is processing...'}</p>
                 </div>
             
                 <div className="mt-4">
@@ -91,7 +89,6 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
                 </div>
             </div>
 
-            {/* FIX: Added mt-auto to push this footer to the bottom of the card */}
             <div className="mt-auto pt-5 border-t border-gray-200 dark:border-slate-700">
                 <div className="flex justify-end items-center">
                     <div className="flex items-center gap-2">

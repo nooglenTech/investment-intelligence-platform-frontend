@@ -33,14 +33,32 @@ export default function Layout({ children }: { children: ReactNode }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const { theme, toggleTheme } = useTheme();
 
+    // This effect runs once on mount to set the initial sidebar state
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth < 1024) setIsSidebarCollapsed(true);
+            if (window.innerWidth < 1024) {
+                setIsSidebarCollapsed(true);
+            }
         };
-        handleResize();
+
+        // Check localStorage for a saved sidebar state
+        const storedSidebarState = localStorage.getItem('sidebarCollapsed');
+        if (storedSidebarState !== null) {
+            setIsSidebarCollapsed(JSON.parse(storedSidebarState));
+        } else {
+            // If no state is saved, check the window size
+            handleResize();
+        }
+
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    // This effect runs whenever the sidebar state changes to save it to localStorage
+    useEffect(() => {
+        localStorage.setItem('sidebarCollapsed', JSON.stringify(isSidebarCollapsed));
+    }, [isSidebarCollapsed]);
+
 
     const isDashboard = router.pathname === '/';
 
@@ -68,16 +86,20 @@ export default function Layout({ children }: { children: ReactNode }) {
                     </div>
                 </nav>
                 
-                <div className={`p-2 border-t border-gray-200 dark:border-slate-800 flex items-center gap-3 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
-                    <div className={`flex items-center ${isSidebarCollapsed ? 'hidden' : ''}`}>
-                        <div className="flex-shrink-0">
-                            <UserButton afterSignOutUrl="/sign-in" />
+                <div className={`p-2 border-t border-gray-200 dark:border-slate-800 flex items-center gap-3 ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+                    {/* User Info Panel: only shown when sidebar is not collapsed */}
+                    {!isSidebarCollapsed && (
+                        <div className="flex items-center overflow-hidden">
+                            <div className="flex-shrink-0">
+                                <UserButton afterSignOutUrl="/sign-in" />
+                            </div>
+                            <div className="ml-2">
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{user?.firstName}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Analyst</p>
+                            </div>
                         </div>
-                        <div className="ml-2">
-                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{user?.firstName}</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Analyst</p>
-                        </div>
-                    </div>
+                    )}
+                    {/* Theme Toggle Button: always visible */}
                     <button onClick={toggleTheme} className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700 focus:outline-none">
                         {theme === 'light' ? (
                             <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
