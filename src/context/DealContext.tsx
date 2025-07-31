@@ -12,13 +12,31 @@ interface Feedback {
   user_name: string;
 }
 
+// --- FIX: Added full definition for the analysis data to resolve type errors ---
+interface FinancialMetric {
+    year?: string;
+    revenue?: string;
+    ebitda?: string;
+    margin?: string;
+}
+
+interface Financials {
+    actuals?: FinancialMetric;
+    estimates?: FinancialMetric;
+}
+
+interface Growth {
+    historical_revenue_cagr?: string;
+}
+
 // Defines the structure of the analysis data returned from the API
-// --- FIX: Added the 'summary' property to match the data structure ---
 interface AnalysisData {
   summary?: string;
   company?: {
     name?: string;
   };
+  financials?: Financials;
+  growth?: Growth;
   ibis_industries?: string[];
   industry?: string;
 }
