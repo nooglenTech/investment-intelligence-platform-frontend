@@ -18,6 +18,10 @@ interface FinancialMetric {
     revenue?: string;
     ebitda?: string;
     margin?: string;
+    gross_margin?: string;
+    capex?: string;
+    capex_pct_revenue?: string;
+    fcf?: string;
 }
 
 interface Financials {
@@ -27,6 +31,7 @@ interface Financials {
 
 interface Growth {
     historical_revenue_cagr?: string;
+    gross_margin?: string; // Added to fix the build error
 }
 
 // Defines the structure of the analysis data returned from the API
