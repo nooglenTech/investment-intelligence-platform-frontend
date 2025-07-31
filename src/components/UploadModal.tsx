@@ -5,7 +5,6 @@ import { useRouter } from 'next/router';
 import { useDeals } from '../context/DealContext';
 import { useAuth } from '@clerk/nextjs';
 
-// --- FIX: Define and apply a type for the component's props ---
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -97,35 +96,35 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
       <div id="modal-content" className="glass-panel rounded-xl w-full max-w-2xl transform transition-all" onClick={e => e.stopPropagation()}>
         {isProcessing ? (
            <div className="p-8 text-center">
-             <div className="w-16 h-16 border-4 border-sky-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
-             <h2 className="text-2xl font-bold text-slate-100 mt-6">Analyzing Document...</h2>
-             <p className="text-slate-400 mt-2">This may take up to a minute. Please wait.</p>
-             {errorText && <div className="mt-4 bg-red-500/20 text-red-300 p-3 rounded-lg">{errorText}</div>}
+             <div className="w-16 h-16 border-4 border-sky-500 dark:border-sky-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-6">Processing Upload...</h2>
+             <p className="text-slate-500 dark:text-slate-400 mt-2">Please wait a moment.</p>
+             {errorText && <div className="mt-4 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 p-3 rounded-lg">{errorText}</div>}
            </div>
         ) : (
           <div>
             <div className="p-8">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-100">Upload Confidential Deck</h2>
-                <button onClick={handleClose} className="text-slate-500 hover:text-slate-200 text-3xl transition-colors">&times;</button>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Upload Confidential Deck</h2>
+                <button onClick={handleClose} className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 text-3xl transition-colors">&times;</button>
               </div>
-              <p className="text-slate-400 mt-2">Drag & drop your PDF or browse to upload.</p>
+              <p className="text-slate-500 dark:text-slate-400 mt-2">Drag & drop your PDF or browse to upload.</p>
             </div>
-            <div className="p-8 border-t border-slate-700">
+            <div className="p-8 border-t border-gray-200 dark:border-slate-700">
               <div
                 id="dropzone"
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onClick={() => document.getElementById('file-input')?.click()}
-                className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all ${isDragOver ? 'border-sky-500 bg-slate-800/50' : 'border-slate-600'}`}
+                className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all ${isDragOver ? 'border-sky-500 bg-sky-50 dark:bg-slate-800/50' : 'border-gray-300 dark:border-slate-600'}`}
               >
-                <svg className="w-16 h-16 mx-auto text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M3 17.25V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v10.5A2.25 2.25 0 0118.75 21H5.25A2.25 2.25 0 013 17.25z" /></svg>
-                <p className="mt-4 text-slate-300">Drop PDF here</p>
+                <svg className="w-16 h-16 mx-auto text-slate-400 dark:text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M3 17.25V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v10.5A2.25 2.25 0 0118.75 21H5.25A2.25 2.25 0 013 17.25z" /></svg>
+                <p className="mt-4 text-slate-600 dark:text-slate-300">Drop PDF here</p>
                 <p className="text-sm text-slate-500">or click to browse</p>
                 <input id="file-input" type="file" className="hidden" accept=".pdf" onChange={(e) => handleFileSelect(e.target.files?.[0])} />
               </div>
-              {errorText && <div className="mt-4 text-red-400 text-center">{errorText}</div>}
+              {errorText && <div className="mt-4 text-red-500 dark:text-red-400 text-center">{errorText}</div>}
             </div>
           </div>
         )}

@@ -31,7 +31,7 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
             if (feedbackCount > 0) return { text: 'In Progress', color: 'sky' };
             return { text: 'Feedback Needed', color: 'amber' };
         }
-        if (deal.status === 'Analyzing') return { text: 'Analyzing...', color: 'sky' };
+        if (deal.status === 'Analyzing') return { text: 'Analyzing...', color: 'sky', isAnalyzing: true };
         if (deal.status === 'Failed') return { text: 'Analysis Failed', color: 'red' };
         return { text: 'Pending', color: 'slate' };
     };
@@ -47,7 +47,6 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
 
     const analysis = deal.analysis || {};
     const financials = analysis.financials || {};
-    const growth = analysis.growth || {};
     const primaryIndustry = deal.tags && deal.tags.length > 0 ? deal.tags[0] : 'N/A';
 
     return (
@@ -68,13 +67,25 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
                 </div>
 
                 <div className="mt-4">
-                    <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2"><span className="font-semibold text-slate-700 dark:text-slate-200">AI Summary:</span> {analysis.summary || 'Analysis is processing...'}</p>
+                    {/* FIX: Added a loading bar when the deal is being analyzed */}
+                    {statusInfo.isAnalyzing ? (
+                        <div>
+                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">AI Summary:</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 italic">Processing document...</p>
+                            <div className="relative w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
+                                <div className="progress-bar-indeterminate h-full"></div>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2"><span className="font-semibold text-slate-700 dark:text-slate-200">AI Summary:</span> {analysis.summary || 'Analysis complete. Click "View Deal" for details.'}</p>
+                    )}
                 </div>
             
                 <div className="mt-4">
                     <button 
                         onClick={() => setShowMetrics(!showMetrics)} 
-                        className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center"
+                        disabled={statusInfo.isAnalyzing}
+                        className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <span>{showMetrics ? 'Hide Key Metrics' : 'Show Key Metrics'}</span>
                         <svg className={`h-4 w-4 ml-1 transition-transform ${showMetrics ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
@@ -83,7 +94,7 @@ export default function DealCard({ deal, index }: { deal: Deal, index: number })
                         <KeyMetric label={`Revenue (${financials.actuals?.year || 'N/A'})`} value={financials.actuals?.revenue} />
                         <KeyMetric label={`EBITDA (${financials.actuals?.year || 'N/A'})`} value={financials.actuals?.ebitda} />
                         <KeyMetric label="EBITDA Margin" value={financials.actuals?.margin} />
-                        <KeyMetric label="Hist. Revenue CAGR" value={growth?.historical_revenue_cagr} />
+                        <KeyMetric label="Gross Margin" value={financials.actuals?.gross_margin} />
                     </div>
                 </div>
             </div>
